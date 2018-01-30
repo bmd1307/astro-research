@@ -187,14 +187,15 @@ def offset_to_coords(os):
     return (os_x, os_y)
 
 # Reads each line in the file (file_name), creates a supernova object from it, and adds each supernova to the given array (sn_list)
-def parse_sne_file(sn_list, file_name):
+def parse_sne_file(sn_dict, file_name):
     print('Parsing file ' + file_name)
 
     sn_file = open(file_name)
     for line in sn_file:
-        sn_list.append(Supernova(line))
+        next_sn = Supernova(line)
+        sn_dict[next_sn.sn_name] = next_sn
 
-    print('Parsed ' + str(len(sn_list)) + ' supernovae')
+    print('Parsed ' + str(len(sn_dict)) + ' supernovae')
 
 # normalizes each value in a list to 0.0 - 1.0
 # ex [1, 2, 3, 5] -> [0, 0.25, 0.5, 1.0]
@@ -209,12 +210,12 @@ def normalize(arr):
 def plot_sne_cumulative():
 
     # parses the full sample of supernovae
-    sne_list = []
-    parse_sne_file(sne_list, 'sn-full.txt')
+    sne_dict = {}
+    parse_sne_file(sne_dict, 'sn-full.txt')
 
     # remove the galaxies with a error in the position angle (-99.999)
-    num_all_sne = len(sne_list)
-    sne_list = [sn for sn in sne_list if sn.galaxy_pa_deg >= 0.0]
+    num_all_sne = len(sne_dict)
+    sne_list = [sn for sn in sne_dict.values() if sn.galaxy_pa_deg >= 0.0]
     print('Removed', str(num_all_sne - len(sne_list)), ' SNe with host galaxies that had bad position angles')
 
     # create a new list for each type of supernovae
