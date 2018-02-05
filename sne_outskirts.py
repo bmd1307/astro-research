@@ -7,6 +7,7 @@ import numpy as np
 
 import galaxy_data
 import supernova_data
+import color_profile
 
 
 def pair_galaxies_and_sne(gal_dict, sne_list):
@@ -27,6 +28,85 @@ def pair_galaxies_and_sne(gal_dict, sne_list):
         print(hostless_sne_count, 'SNe were not paired with their host galaxy')
     else:
         print('All SNe paired with their host galaxy.')
+
+def pair_galaxies_and_colors(gal_dict, color_dict):
+    print('Pairing galaxies with color profiles...')
+    profiled_galaxy_counter = 0
+
+    for galaxy_name in gal_dict.keys():
+        curr_FUV_name = to_FUV_name(galaxy_name)
+        if curr_FUV_name in color_dict.keys():
+            gal_dict[galaxy_name].color_profile = color_dict[curr_FUV_name]
+            profiled_galaxy_counter = profiled_galaxy_counter + 1
+
+    print(profiled_galaxy_counter, 'galaxies were given color profiles')
+
+def count_colors():
+    # parses the full sample of supernovae
+    gal_dict = {}
+    galaxy_data.parse_galaxy_file(gal_dict, 'table2.dat')
+
+    # parses the full sample of supernovae
+    sne_list = []
+    supernova_data.parse_sne_file(sne_list, 'sn-full.txt')
+
+    # parses the color profiles
+    color_dict = {}
+    color_profile.parse_color_profile_file(color_dict, 'nearby_galaxy_fuv_radius.txt')
+
+    pair_galaxies_and_colors(gal_dict, color_dict)
+
+    pair_galaxies_and_sne(gal_dict, sne_list)
+
+    profiled_galaxies = [curr_gal for curr_gal in gal_dict.values() if curr_gal.color_profile != None]
+
+    num_sne_with_profiles = sum([curr_gal.sne_Ia + curr_gal.sne_SE + curr_gal.sne_II\
+                             for curr_gal in profiled_galaxies])
+
+    sne_with_profiles = []
+    for curr_gal in profiled_galaxies:
+        sne_with_profiles = sne_with_profiles + curr_gal.supernovae
+
+    print(len(sne_with_profiles), 'supernovae are in galaxies with color information')
+
+    for curr_sn in sne_with_profiles:
+        if curr_sn.distance_ratio("read") > 1.0:
+            print(curr_sn.galaxy_name, curr_sn.sn_name, curr_sn.distance_ratio("read"), curr_sn.sn_type, sep = '\t')
+
+def to_FUV_name(graur_name):
+    if graur_name[0:3] == "ESO":
+        if graur_name[0:6] == "ESO-LV":
+            return None
+        else:
+            return "ESO" + graur_name[4:7] + "-" + graur_name[11:14]
+
+    elif graur_name[0:2] == "IC":
+        last_letter = ""
+        if len(graur_name) > 7 and graur_name[7].isalpha():
+            last_letter = graur_name[7]
+        return "IC" + graur_name[3:7] + last_letter
+
+    elif graur_name[0:3] == "NGC":
+        last_letter = ""
+        if ':' in graur_name:
+            last_letter = ""    #ignore the one instance of NGC5457
+        elif len(graur_name) > 8 and graur_name[8].isalpha():
+            last_letter = graur_name[8]
+        return "NGC" + graur_name[4:8] + last_letter
+
+    elif graur_name[0:3] == "PGC":
+        return "PGC" + graur_name[4:10]
+
+    elif graur_name[0:3] == "UGC":
+        if graur_name[0:4] == "UGCA":
+            return None
+        else:
+            last_letter = ""
+            if len(graur_name) > 9 and graur_name[9].isalpha():
+                last_letter = graur_name[9]
+            return "UGC" + graur_name[4:9] + last_letter
+    else:
+        return None
 
 
 # normalizes each value in a list to 0.0 - 1.0
@@ -434,12 +514,15 @@ def __main__():
 
     #plot_sne_cumulative()
 
-    calc_sne_rate()
+    #calc_sne_rate()
 
     #outskirts_rate_vs_mass()
 
     #plot_num_sne_vs_radius()
 
+    #test_graur_to_FUV()
+
+    count_colors()
 
 __main__()
 

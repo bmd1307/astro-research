@@ -27,6 +27,8 @@ class Galaxy:
 
         self.supernovae             = None # initialize this to none to indicate that it hasn't been parsed yet, not that it has zero galaxies
 
+        self.color_profile          = None
+
 
 def parse_galaxy_file(gal_dict, file_name):
     print('Parsing file ' + file_name)
