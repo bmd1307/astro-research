@@ -41,6 +41,13 @@ def pair_galaxies_and_colors(gal_dict, color_dict):
 
     print(profiled_galaxy_counter, 'galaxies were given color profiles')
 
+def test_axis_parsing():
+    gal_dict = {}
+    galaxy_data.parse_galaxy_file(gal_dict, 'table2.dat', 'galaxy-full.txt')
+
+    test_galaxy = gal_dict[list(gal_dict.keys())[0]]
+    print(test_galaxy.name, test_galaxy.maj_axis_min, test_galaxy.min_axis_min)
+
 def count_colors():
     # parses the full sample of supernovae
     gal_dict = {}
@@ -284,7 +291,7 @@ def bin_mean_mass(galaxy_bin):
 def calc_sne_rate():
     # parses the full sample of supernovae
     gal_dict = {}
-    supernova_data.parse_galaxy_file(gal_dict, 'table2.dat')
+    galaxy_data.parse_galaxy_file(gal_dict, 'table2.dat')
 
     num_full_optimal = sum([1 for curr_gal in gal_dict.values() if curr_gal.full_optimal])
     num_not_optimal = sum([1 for curr_gal in gal_dict.values() if not curr_gal.full_optimal])
@@ -522,7 +529,9 @@ def __main__():
 
     #test_graur_to_FUV()
 
-    count_colors()
+    #count_colors()
+
+    test_axis_parsing()
 
 __main__()
 

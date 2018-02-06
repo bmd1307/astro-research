@@ -1,8 +1,12 @@
 
+import math
+
 class ColorData:
     def __init__(self, file_line):
         self.galaxy_name    = file_line[0:10].strip() # get rid of extra spaces
         self.radius_sec     = float(file_line[11:14])
+
+        self.ellipticity    = float(file_line[15:20])
 
         self.mu_FUV         = float(file_line[21:27])
         self.mu_FUV_err     = float(file_line[28:36])
@@ -17,7 +21,20 @@ class ColorData:
         self.mu_36          = float(file_line[101:107])
         self.mu_36_err      = float(file_line[115:124])
 
-    # add functions which convert a magnitude to stellar mass/frequency
+    def ring_mass_density(self, imf ='chabrier'):
+        log10_aimf = None
+
+        if imf.upper() == 'CHABRIER':
+            log10_aimf = 0
+        elif imf.upper() == 'KROUPA':
+            log10_aimf = 0.015
+        elif imf.upper() == 'SALPETER':
+            log10_aimf = 0.215
+        else:
+            raise TypeError('imf type must be chabrier, kroupa or salpeter')
+
+        return 10 ** (10.819 - 0.4*self.mu_36 + log10_aimf)
+
 
 def parse_color_profile_file(color_profile_dict, file_name):
     print('Parsing file ' + file_name)
