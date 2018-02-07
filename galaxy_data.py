@@ -1,4 +1,4 @@
-
+import math
 
 class Galaxy:
     # Creates a Supernova object from a line from the supernova file
@@ -36,6 +36,45 @@ class Galaxy:
     def construct_mass_profile(self):
         if self.color_profile == None:
             raise AttributeError('A mass profile cannot be constructed for galaxies with no color profiles')
+
+        if self.maj_axis_min == None:
+            raise AttributeError('A mass profile cannot be constructed for galaxies with no major axis measurement')
+
+        self.mass_profile = []
+
+        # get the indices of the color profile which contain IR data and sort them in ascending order
+        indices = sorted([index for index in self.color_profile.keys() if self.color_profile[index].mu_36 != None])
+
+        arcsec_to_distance_ratio = lambda sec: float(sec) / (self.maj_axis_min * 60) #convert the minutes to seconds
+
+                                                    # convert Mpc to pc
+        arcsec_to_parsec = lambda sec: float(sec) * (self.distance * 1000000.0) / 206265.0
+
+        # accumulates the mass
+        cumulative_mass = 0.0
+
+        # assume all the mass is contained from the outermost ring inwards
+        self.mass_profile.append((arcsec_to_distance_ratio(3), cumulative_mass))
+
+        for rad_index in indices:
+            curr_ring_radius = arcsec_to_parsec(rad_index)
+            curr_ring_half_width = arcsec_to_parsec(3)
+
+            curr_ellipticity = self.color_profile[rad_index].ellipticity
+
+            # the area of a ring-shaped ellipse = (4pi*central radius * half_ring_width) * (1 - ellipticity)
+            curr_ring_area_pc = 4 * math.pi * curr_ring_radius * curr_ring_half_width * (1 - curr_ellipticity)
+
+            # calculates the mass in the ring in solar masses (surface density times area in square parsecs)
+            curr_ring_mass = self.color_profile[rad_index].ring_mass_density() * curr_ring_area_pc
+
+            # add the next point on the surface profile
+            self.mass_profile.append((arcsec_to_distance_ratio(rad_index + 3), cumulative_mass + curr_ring_mass))
+
+            # the new cumulative mass is the current cumulative mass - the current ring's mass
+            cumulative_mass = cumulative_mass + curr_ring_mass
+
+
 
 def parse_galaxy_file(gal_dict, main_file_name, axes_file_name):
     print('Parsing file ' + main_file_name)

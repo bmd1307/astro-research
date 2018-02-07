@@ -1,6 +1,7 @@
 # Brennan Dell
 # Supernova Rate in Outskirts
 
+import time
 import math
 import matplotlib.pyplot as plt
 import numpy as np
@@ -42,11 +43,71 @@ def pair_galaxies_and_colors(gal_dict, color_dict):
     print(profiled_galaxy_counter, 'galaxies were given color profiles')
 
 def test_axis_parsing():
+    # parses galaxy data
     gal_dict = {}
     galaxy_data.parse_galaxy_file(gal_dict, 'table2.dat', 'galaxy-full.txt')
 
     test_galaxy = gal_dict[list(gal_dict.keys())[0]]
     print(test_galaxy.name, test_galaxy.maj_axis_min, test_galaxy.min_axis_min)
+
+def test_galaxy_mass_function():
+    gal_dict = {}
+    galaxy_data.parse_galaxy_file(gal_dict, 'table2.dat', 'galaxy-full.txt')
+
+    # parses the color profiles
+    color_dict = {}
+    color_profile.parse_color_profile_file(color_dict, 'nearby_galaxy_fuv_radius.txt')
+
+    pair_galaxies_and_colors(gal_dict, color_dict)
+
+    profiled_galaxies = [curr_gal for curr_gal in gal_dict.values() if curr_gal.color_profile != None]
+
+    test_galaxies = profiled_galaxies[0:10]
+    for test_galaxy in test_galaxies:
+        print(test_galaxy.name)
+
+        test_galaxy.construct_mass_profile()
+        test_mass_function = test_galaxy.mass_profile
+
+        print('*** Mass Function ***')
+        print('Radius', 'Mass', sep = '\t')
+        for point in test_mass_function:
+            print(point[0], point[1], sep = '\t')
+
+        drs = [point[0] for point in test_mass_function]
+        masses = [point[1] for point in test_mass_function]
+
+        plt.plot(drs, masses)
+        plt.show()
+
+def find_mass_function_limits():
+    gal_dict = {}
+    galaxy_data.parse_galaxy_file(gal_dict, 'table2.dat', 'galaxy-full.txt')
+
+    # parses the color profiles
+    color_dict = {}
+    color_profile.parse_color_profile_file(color_dict, 'nearby_galaxy_fuv_radius.txt')
+
+    pair_galaxies_and_colors(gal_dict, color_dict)
+
+    profiled_galaxies = [curr_gal for curr_gal in gal_dict.values() if curr_gal.color_profile != None]
+
+    print(time.time())
+
+    for curr_gal in profiled_galaxies:
+        curr_gal.construct_mass_profile()
+
+    print(time.time())
+
+    highest_radii = sorted([gal.mass_profile[-1][0] for gal in profiled_galaxies])
+
+    plt.hist(highest_radii, bins = 10, range = (1.0, 2.0), cumulative = -1, normed = True)
+    plt.show()
+
+    plt.hist(highest_radii, bins = 50, cumulative = -1, normed = True)
+    plt.show()
+
+
 
 def count_colors():
     # parses the full sample of supernovae
@@ -531,7 +592,11 @@ def __main__():
 
     #count_colors()
 
-    test_axis_parsing()
+    #test_axis_parsing()
+
+    #test_galaxy_mass_function()
+
+    find_mass_function_limits()
 
 __main__()
 
