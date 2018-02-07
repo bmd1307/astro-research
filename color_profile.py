@@ -42,6 +42,28 @@ class ColorData:
         else:
             return 10 ** (10.819 - 0.4*self.mu_36 + log10_aimf)
 
+    def ring_specific_SFR(self, imf ='chabrier'):
+        log10_aimf = None
+        log10_bimf = None
+        log10_ups_3_6 = math.log10(0.6)       # upsilon 3.6 - the mass to luminosity ratio of the sun
+
+        if imf.upper() == 'CHABRIER':
+            log10_aimf = 0.0
+            log10_bimf = -0.201
+        elif imf.upper() == 'KROUPA':
+            log10_aimf = 0.015
+            log10_bimf = -0.174
+        elif imf.upper() == 'SALPETER':
+            log10_aimf = 0.215
+            log10_bimf = 0.0
+        else:
+            raise TypeError('imf type must be chabrier, kroupa or salpeter')
+
+        if self.mu_36 is None or self.mu_FUV is None:
+            return 0
+        else:
+            return 10 ** (-0.4 * (self.mu_FUV - self.mu_36) - 9.628 + log10_bimf - log10_ups_3_6 - log10_aimf)
+
 
 def parse_color_profile_file(color_profile_dict, file_name):
     print('Parsing file ' + file_name)

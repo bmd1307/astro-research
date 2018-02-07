@@ -101,6 +101,10 @@ def find_mass_function_limits():
 
     highest_radii = sorted([gal.mass_profile[-1][0] for gal in profiled_galaxies])
 
+    mean_highest_radius = sum(highest_radii) / float(len(highest_radii))
+
+    print("Mean highest radius:", mean_highest_radius)
+
     plt.hist(highest_radii, bins = 10, range = (1.0, 2.0), cumulative = -1, normed = True)
     plt.show()
 
