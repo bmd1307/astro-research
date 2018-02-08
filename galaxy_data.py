@@ -74,7 +74,37 @@ class Galaxy:
             # the new cumulative mass is the current cumulative mass - the current ring's mass
             cumulative_mass = cumulative_mass + curr_ring_mass
 
+    def cumulative_mass_function(self, distance_ratio):
+        if self.mass_profile is None:
+            raise AttributeError("Cannot access a galaxy's CMF which hasn't been constructed.")
 
+        drs = [point[0] for point in self.mass_profile]
+
+        right_point_index = 0
+
+        # find the index of the point in the mass function with the first distance ratio which is greater than the
+        # requested distance ratio
+        while right_point_index < len(drs) and drs[right_point_index] < distance_ratio:
+            right_point_index = right_point_index + 1
+
+        # the distance ratio is within the innermost ring (outside the domain of the CMF)
+        if right_point_index == 0:
+            return 0
+        # if the distance ratio is beyond the outermost ring
+        elif right_point_index == len(drs):
+            return self.mass_profile[-1][1] # return the mass of the last point on the CMF
+        # if the distance ratio is between two points on the CMF
+        else:
+            # assume the point at distance_ratio is on the line between its two nearest points
+            left_dr = self.mass_profile[right_point_index - 1][0]
+            right_dr = self.mass_profile[right_point_index][0]
+
+            left_mass = self.mass_profile[right_point_index - 1][1]
+            right_mass = self.mass_profile[right_point_index][1]
+
+            slope = (right_mass - left_mass) / (right_dr - left_dr)
+
+            return (distance_ratio - left_dr) * slope + left_mass
 
 def parse_galaxy_file(gal_dict, main_file_name, axes_file_name):
     print('Parsing file ' + main_file_name)

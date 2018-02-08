@@ -74,6 +74,9 @@ def test_galaxy_mass_function():
         for point in test_mass_function:
             print(point[0], point[1], sep = '\t')
 
+        print('CMF(0.5) =', '%.3e' % test_galaxy.cumulative_mass_function(0.5))
+        print('CMF(1.0) =', '%.3e' % test_galaxy.cumulative_mass_function(1.0))
+
         drs = [point[0] for point in test_mass_function]
         masses = [point[1] for point in test_mass_function]
 
@@ -598,9 +601,9 @@ def __main__():
 
     #test_axis_parsing()
 
-    #test_galaxy_mass_function()
+    test_galaxy_mass_function()
 
-    find_mass_function_limits()
+    #find_mass_function_limits()
 
 __main__()
 
