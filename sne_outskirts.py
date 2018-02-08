@@ -297,6 +297,22 @@ def sn_rate(galaxy_bin, sn_type):
 
     return total_sne / control_time_sum
 
+def sn_rate_general(sn_data):
+    #sn_data is a list of tuples. Each tuple is: (Number SNe, mass of region (Msun), control time (yr))
+    total_sne = 0
+    control_time_sum = 0
+
+    for g in sn_data:
+        num_sne, stellar_mass, control_time = g
+
+        total_sne = total_sne + num_sne
+        control_time_sum = control_time_sum + control_time * stellar_mass
+
+    if control_time_sum > 0:
+        return total_sne / control_time_sum
+    else:
+        # return infinity if the mass of the calculated region is 0
+        return float('inf')
 
 # returns the rate of a certain type of supernova in a bin of galaxies
 def sn_rate_outskirts(galaxy_bin, sn_type):
@@ -583,6 +599,87 @@ def count_types_in_outskirts():
     print('SE SNe in outskirts:', num_SE)
     print('SNe II in outskirts:', num_II)
 
+def sn_rate_by_radius(num_bins, sn_type, low_limit, high_limit):
+    # parses the full sample of supernovae
+    gal_dict = {}
+    galaxy_data.parse_galaxy_file(gal_dict, 'table2.dat', 'galaxy-full.txt')
+
+    # parses the full sample of supernovae
+    sne_list = []
+    supernova_data.parse_sne_file(sne_list, 'sn-full.txt')
+
+    # parses the color profiles
+    color_dict = {}
+    color_profile.parse_color_profile_file(color_dict, 'nearby_galaxy_fuv_radius.txt')
+
+    pair_galaxies_and_colors(gal_dict, color_dict)
+
+    pair_galaxies_and_sne(gal_dict, sne_list)
+
+    profiled_galaxies = [curr_gal for curr_gal in gal_dict.values() if curr_gal.color_profile is not None]
+
+    num_Ia = sum([curr_gal.sne_Ia for curr_gal in profiled_galaxies])
+    num_SE = sum([curr_gal.sne_SE for curr_gal in profiled_galaxies])
+    num_II = sum([curr_gal.sne_II for curr_gal in profiled_galaxies])
+
+    print('SN counts for the fully profiled galaxies by type:')
+    print('Ia:', num_Ia)
+    print('SE:', num_SE)
+    print('II:', num_II)
+
+    # construct the CMFs for each of the galaxies
+    for curr_gal in profiled_galaxies:
+        curr_gal.construct_mass_profile()
+
+    # calculates the limits for each of the bins with a low and high limit and a number of bins
+    bin_limits = [low_limit + float(n) * (high_limit - low_limit) / num_bins for n in range(0, num_bins + 1)]
+
+    sn_rate_bins = [0] * num_bins
+
+    for bin_num in range(0, num_bins):
+        curr_bin_low = bin_limits[bin_num]      # lower distance ratio limit for this bin
+        curr_bin_high = bin_limits[bin_num + 1] # upper distance ratio limit for this bin
+        curr_bin_sn_data = []
+
+        for curr_gal in profiled_galaxies:
+            #tuple structure: Num Sne, stellar mass, control time
+            curr_range_num_sne = 0
+            curr_range_mass = curr_gal.radial_range_mass(curr_bin_low, curr_bin_high)
+            curr_range_control_time = None
+
+            # count the number of SNe this galaxy has in the radial range
+            for sn in curr_gal.supernovae:
+                curr_sn_type = sn.sn_type_class()
+                # convert the Ib, Ibc, Ic classifications to SE
+                if curr_sn_type == 'Ib' or curr_sn_type == 'Ic' or curr_sn_type == 'Ibc':
+                    curr_sn_type = 'SE'
+
+                if curr_sn_type == sn_type and \
+                        curr_bin_low < sn.distance_ratio('read') and sn.distance_ratio('read') < curr_bin_high:
+                    curr_range_num_sne = curr_range_num_sne + 1
+
+            if sn_type == 'Ia':
+                curr_range_control_time = curr_gal.tc_Ia
+            elif sn_type == 'SE':
+                curr_range_control_time = curr_gal.tc_SE
+            elif sn_type == 'II':
+                curr_range_control_time = curr_gal.tc_II
+            else:
+                raise AttributeError(sn_type + ' is not a valid SN type: rate cannot be calculated')
+
+            curr_bin_sn_data.append( (curr_range_num_sne, curr_range_mass, curr_range_control_time) )
+
+        sn_rate_bins[bin_num] = sn_rate_general(curr_bin_sn_data)
+
+        total_sne_for_this_bin = sum([data[0] for data in curr_bin_sn_data])
+        print('Bin', bin_num, 'has', total_sne_for_this_bin, 'sne')
+
+    print('Rates:')
+    for bin_num in range(0, num_bins):
+        print(bin_limits[bin_num], bin_limits[bin_num + 1], sn_rate_bins[bin_num] * 10**12) # convert to SNuM
+
+    plt.plot(bin_limits[:-1], sn_rate_bins)
+    plt.show()
 
 def __main__():
     print(" *** sne_outskirts.py *** ")
@@ -601,9 +698,15 @@ def __main__():
 
     #test_axis_parsing()
 
-    test_galaxy_mass_function()
+    #test_galaxy_mass_function()
 
     #find_mass_function_limits()
+
+    sn_rate_by_radius(2, 'Ia',0.0, 2.0)
+    sn_rate_by_radius(2, 'SE', 0.0, 2.0)
+    sn_rate_by_radius(2, 'II', 0.0, 2.0)
+
+
 
 __main__()
 

@@ -106,6 +106,9 @@ class Galaxy:
 
             return (distance_ratio - left_dr) * slope + left_mass
 
+    def radial_range_mass(self, low_limit, high_limit):
+        return self.cumulative_mass_function(high_limit) - self.cumulative_mass_function(low_limit)
+
 def parse_galaxy_file(gal_dict, main_file_name, axes_file_name):
     print('Parsing file ' + main_file_name)
 
