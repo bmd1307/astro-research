@@ -33,6 +33,9 @@ class Galaxy:
         self.maj_axis_min           = None # not present in the graur data
         self.min_axis_min           = None # these come from the Graur data
 
+        self.band_36                = None # band 36 data from the spitzer images
+        self.band_45                = None  # band 36 data from the spitzer images
+
     def construct_mass_profile(self):
         if self.color_profile == None:
             raise AttributeError('A mass profile cannot be constructed for galaxies with no color profiles')

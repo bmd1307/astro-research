@@ -9,6 +9,7 @@ import numpy as np
 import galaxy_data
 import supernova_data
 import color_profile
+import spitzer_profile
 
 
 def pair_galaxies_and_sne(gal_dict, sne_list):
@@ -41,6 +42,21 @@ def pair_galaxies_and_colors(gal_dict, color_dict):
             profiled_galaxy_counter = profiled_galaxy_counter + 1
 
     print(profiled_galaxy_counter, 'galaxies were given color profiles')
+
+def pair_galaxies_and_spitzer_profiles(gal_dict, spitzer_dict):
+    print('Pairing galaxies with spitzer profiles...')
+    profiled_galaxy_counter = 0
+
+    for galaxy_name in gal_dict.keys():
+        curr_spitzer_name = to_FUV_name(galaxy_name)
+        if curr_spitzer_name in spitzer_dict.keys():
+            gal_dict[galaxy_name].band_36 = spitzer_dict[curr_spitzer_name][0]
+            gal_dict[galaxy_name].band_45 = spitzer_dict[curr_spitzer_name][1]
+
+            profiled_galaxy_counter = profiled_galaxy_counter + 1
+
+    print(profiled_galaxy_counter, 'galaxies were given color profiles')
+
 
 def test_axis_parsing():
     # parses galaxy data
@@ -114,7 +130,26 @@ def find_mass_function_limits():
     plt.hist(highest_radii, bins = 50, cumulative = -1, normed = True)
     plt.show()
 
+def test_spitzer_parsing():
+    # parses galaxy data
+    gal_dict = {}
+    galaxy_data.parse_galaxy_file(gal_dict, 'table2.dat', 'galaxy-full.txt')
 
+    spitzer_dict = {}
+    spitzer_profile.parse_spitzer_file(spitzer_dict, 'radial_profiles.csv')
+
+    pair_galaxies_and_spitzer_profiles(gal_dict, spitzer_dict)
+
+    galaxies_with_spitzer = [g for g in gal_dict.values() if g.band_36 is not None]
+
+    print('*** Sample Galaxy ***')
+    print('Name', galaxies_with_spitzer[0].name)
+    print('Band 3.6')
+    for k in galaxies_with_spitzer[0].band_36.keys():
+        print('\t', k, galaxies_with_spitzer[0].band_36[k].aperture_flux)
+    print('Band 4.5')
+    for k in galaxies_with_spitzer[0].band_45.keys():
+        print('\t', k, galaxies_with_spitzer[0].band_45[k].aperture_flux)
 
 def count_colors():
     # parses the full sample of supernovae
@@ -702,11 +737,11 @@ def __main__():
 
     #find_mass_function_limits()
 
-    sn_rate_by_radius(2, 'Ia',0.0, 2.0)
-    sn_rate_by_radius(2, 'SE', 0.0, 2.0)
-    sn_rate_by_radius(2, 'II', 0.0, 2.0)
+    #sn_rate_by_radius(2, 'Ia',0.0, 2.0)
+    #sn_rate_by_radius(2, 'SE', 0.0, 2.0)
+    #sn_rate_by_radius(2, 'II', 0.0, 2.0)
 
-
+    test_spitzer_parsing()
 
 __main__()
 
