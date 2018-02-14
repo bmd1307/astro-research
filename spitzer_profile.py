@@ -1,5 +1,6 @@
 
 import csv
+import math
 
 class SpitzerRecord:
     def __init__(self, line_data):
@@ -18,6 +19,11 @@ class SpitzerRecord:
 
         self.maj_axis_radius_sec =      int(float(line_data[6]))
 
+    def flux_Jy(self):
+        if self.aperture_flux is None or self.ellipticity is None or self.maj_axis_radius_sec is None:
+            return None
+        # converts:    MJy/sr -> Jy/arcsec^2                        *** ellipse area *** ((1 - eta) * pi * a^2
+        return (2.35045e-5 * self.aperture_flux) * math.pi * (1 - self.ellipticity) * self.maj_axis_radius_sec ** 2
 
 def parse_spitzer_file(spitzer_dict, file_name):
     print('Parsing file ' + file_name)
@@ -42,6 +48,3 @@ def parse_spitzer_file(spitzer_dict, file_name):
                 curr_spitzer_data
         else:
             raise AttributeError('Invalid band width found while parsing spitzer data.')
-
-
-    # remember to remove the first CSV line

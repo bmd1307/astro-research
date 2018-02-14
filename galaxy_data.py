@@ -30,6 +30,9 @@ class Galaxy:
         self.color_profile          = None
         self.mass_profile           = None
 
+        self.flux_36_profile        = None
+        self.flux_45_profile        = None
+
         self.maj_axis_min           = None # not present in the graur data
         self.min_axis_min           = None # these come from the Graur data
 
@@ -108,6 +111,37 @@ class Galaxy:
             slope = (right_mass - left_mass) / (right_dr - left_dr)
 
             return (distance_ratio - left_dr) * slope + left_mass
+
+    def construct_spitzer_profile(self):
+        if self.band_36 is None or self.band_45 is None:
+            raise AttributeError('A spitzer mass profile cannot be constructed for galaxies with no IR band data')
+
+        if self.maj_axis_min is None:
+            raise AttributeError('A mass profile cannot be constructed for galaxies with no major axis measurement')
+
+        arcsec_to_distance_ratio = lambda sec: float(sec) / (self.maj_axis_min * 60)  # convert the minutes to seconds
+
+        # fluxes are in Jy, distance is in Mpc
+        flux_to_mstar = lambda f36_Jy, f45_Jy, d_mpc: (10**5.65) * (f36_Jy**2.85) * (f45_Jy**-1.85) * (d_mpc / 0.05)**2
+
+        common_indices = [index for index in self.band_36 if index in self.band_45]
+
+        indices_with_data = sorted([index for index in common_indices\
+                                if self.band_36[index] is not None and self.band_45[index] is not None])
+
+        # the mass at distance ratio 0 is 0
+        self.mass_profile = [(0.0, 0.0)]
+
+        for index in indices_with_data[1:]:
+            #curr_flux_36 = self.band_36[index].flux_Jy()
+            #curr_flux_45 = self.band_45[index].flux_Jy()
+
+            curr_flux_36 = self.band_36[index].aperture_flux
+            curr_flux_45 = self.band_45[index].aperture_flux
+
+            self.mass_profile.append(\
+                (arcsec_to_distance_ratio(index),\
+                 flux_to_mstar(curr_flux_36, curr_flux_45, self.distance)))
 
     def radial_range_mass(self, low_limit, high_limit):
         return self.cumulative_mass_function(high_limit) - self.cumulative_mass_function(low_limit)

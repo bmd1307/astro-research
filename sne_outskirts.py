@@ -99,6 +99,38 @@ def test_galaxy_mass_function():
         plt.plot(drs, masses)
         plt.show()
 
+def test_spitzer_profiles():
+    gal_dict = {}
+    galaxy_data.parse_galaxy_file(gal_dict, 'table2.dat', 'galaxy-full.txt')
+
+    spitzer_dict = {}
+    spitzer_profile.parse_spitzer_file(spitzer_dict, 'radial_profiles.csv')
+
+    pair_galaxies_and_spitzer_profiles(gal_dict, spitzer_dict)
+
+    profiled_galaxies = [curr_gal for curr_gal in gal_dict.values() if curr_gal.band_36 is not None]
+
+    test_galaxies = profiled_galaxies[0:10]
+    for test_galaxy in test_galaxies:
+        print(test_galaxy.name)
+
+        test_galaxy.construct_spitzer_profile()
+        test_mass_function = test_galaxy.mass_profile
+
+        print('*** Mass Function ***')
+        print('Radius', 'Mass', sep='\t')
+        for point in test_mass_function:
+            print('%.3f' % point[0], '%.3e' % point[1], sep='\t')
+
+        print('CMF(0.5) =', '%.3e' % test_galaxy.cumulative_mass_function(0.5))
+        print('CMF(1.0) =', '%.3e' % test_galaxy.cumulative_mass_function(1.0))
+
+        drs = [point[0] for point in test_mass_function]
+        masses = [point[1] for point in test_mass_function]
+
+        plt.plot(drs, masses)
+        plt.show()
+
 def find_mass_function_limits():
     gal_dict = {}
     galaxy_data.parse_galaxy_file(gal_dict, 'table2.dat', 'galaxy-full.txt')
@@ -741,7 +773,9 @@ def __main__():
     #sn_rate_by_radius(2, 'SE', 0.0, 2.0)
     #sn_rate_by_radius(2, 'II', 0.0, 2.0)
 
-    test_spitzer_parsing()
+    #test_spitzer_parsing()
+
+    test_spitzer_profiles()
 
 __main__()
 
