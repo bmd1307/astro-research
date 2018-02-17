@@ -146,6 +146,22 @@ class Galaxy:
     def radial_range_mass(self, low_limit, high_limit):
         return self.cumulative_mass_function(high_limit) - self.cumulative_mass_function(low_limit)
 
+    def count_total_sne(self):
+        if self.supernovae == None:
+            raise AttributeError('Cannot count supernovae: this galaxy has not yet been cross-matched')
+        else:
+            return len(self.supernovae)
+
+    def count_outskirts_sne(self):
+        if self.supernovae == None:
+            raise AttributeError('Cannot count supernovae: this galaxy has not yet been cross-matched')
+        else:
+            toReturn = 0
+            for sn in self.supernovae:
+                if sn.distance_ratio('read') > 1.0:
+                    toReturn = toReturn + 1
+            return toReturn
+
 def parse_galaxy_file(gal_dict, main_file_name, axes_file_name):
     print('Parsing file ' + main_file_name)
 

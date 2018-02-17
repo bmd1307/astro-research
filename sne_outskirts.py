@@ -408,10 +408,206 @@ def sn_rate_by_radius(num_bins, sn_type, low_limit, high_limit):
     plt.plot(bin_limits[:-1], sn_rate_bins)
     plt.show()
 
+def hist_total_sne_by_stellar_mass(n_bins):
+    # parses the full sample of supernovae
+    gal_dict = {}
+    parse_galaxy_file(gal_dict, 'table2.dat', 'galaxy-full.txt')
+
+    # parses the full sample of supernovae
+    sne_list = []
+    parse_sne_file(sne_list, 'sn-full.txt')
+
+    pair_galaxies_and_sne(gal_dict, sne_list)
+
+    # limits the list of galaxies to the full_optimal
+    list_galaxies = [curr_gal for curr_gal in gal_dict.values() if curr_gal.full_optimal]
+
+    # constructs a list of the log of the stellar masses (if the mass is present) for galaxies with SNe
+    log_masses = [math.log10(curr_gal.stellar_mass_Lum) for curr_gal in list_galaxies if curr_gal.stellar_mass_Lum > 0.0 and curr_gal.count_outskirts_sne() > 0]
+    print('Optimal bin number:', freedman_diaconis_nbins(log_masses))
+
+    #                     10^8 Msun 10^12 Msun
+    bin_limits = log_bins(0.01, 100, n_bins)
+
+    galaxy_bins = []
+
+    # for each mass bin
+    for bin_num in range(0, n_bins):
+        curr_bin_min = bin_limits[bin_num]
+        curr_bin_max = bin_limits[bin_num + 1]
+
+        galaxy_bin = []
+
+        # for each galaxy
+        for gal in list_galaxies:
+
+            # check if the galaxy is in the right mass range
+            if curr_bin_min < gal.stellar_mass_Lum and \
+                    gal.stellar_mass_Lum < curr_bin_max:
+                galaxy_bin.append(gal)
+
+        galaxy_bins.append(galaxy_bin)
+
+    sne_tot_bins = []
+    sne_out_bins = []
+
+    for gs in galaxy_bins:
+        curr_total_sne = 0
+        curr_total_out_sne = 0
+
+        for curr_gal in gs:
+            curr_total_sne = curr_total_sne + curr_gal.count_total_sne()
+
+            curr_total_out_sne = curr_total_out_sne + curr_gal.count_outskirts_sne()
+        sne_tot_bins.append(curr_total_sne)
+        sne_out_bins.append(curr_total_out_sne)
+
+    print('SNe bins:', sne_tot_bins)
+    print('Total SNe found:', sum(sne_tot_bins))
+
+    print('SNe (outskirts) bins:', sne_out_bins)
+    print('Total SNe (outskirts) found:', sum(sne_out_bins))
+
+    for i in range(0, len(sne_out_bins)):
+        print('10^' + str(10.0 + math.log10(bin_limits[i])),\
+              '10^' + str(10.0 + math.log10(bin_limits[i + 1])),\
+              sne_tot_bins[i],\
+              sne_out_bins[i], \
+              '%.3g' % (1.0 * sne_out_bins[i] / sne_tot_bins[i]), \
+              sep = '\t')
+
+    plt.step(bin_limits[:-1], sne_tot_bins, where='post')
+    plt.step(bin_limits[:-1], sne_out_bins, where='post')
+
+    plt.legend(["Total SNe", 'Outskirts SNe'])
+
+    plt.title('Supernova Frequency vs Galaxy Stellar Mass')
+    plt.xlabel('Stellar Mass (10^10 Msun)')
+    plt.ylabel('Number of SNe')
+    plt.xscale('log')
+    plt.show()
+
+def total_sn_rate_outskirts(n_bins, save_graph = False, verbose = True):
+    # parses the full sample of supernovae
+    gal_dict = {}
+    parse_galaxy_file(gal_dict, 'table2.dat', 'galaxy-full.txt')
+
+    # parses the full sample of supernovae
+    sne_list = []
+    parse_sne_file(sne_list, 'sn-full.txt')
+
+    pair_galaxies_and_sne(gal_dict, sne_list)
+
+    # limits the list of galaxies to the full_optimal
+    list_galaxies = [curr_gal for curr_gal in gal_dict.values() if curr_gal.full_optimal]
+
+    #                     10^8 Msun 10^12 Msun
+    bin_limits = log_bins(0.01, 100, n_bins)
+
+    galaxy_bins = []
+
+    # for each mass bin
+    for bin_num in range(0, n_bins):
+        curr_bin_min = bin_limits[bin_num]
+        curr_bin_max = bin_limits[bin_num + 1]
+
+        galaxy_bin = []
+
+        # for each galaxy
+        for gal in list_galaxies:
+
+            # check if the galaxy is in the right mass range
+            if curr_bin_min < gal.stellar_mass_Lum and \
+                    gal.stellar_mass_Lum < curr_bin_max:
+                galaxy_bin.append(gal)
+
+        galaxy_bins.append(galaxy_bin)
+
+    rate_bins = []
+
+    for curr_bin in galaxy_bins:
+        total_rate = sn_rate_outskirts(curr_bin, 'Ia') + \
+                     sn_rate_outskirts(curr_bin, 'SE') + \
+                     sn_rate_outskirts(curr_bin, 'II')
+
+        # convert to SNuM
+        rate_bins.append(total_rate * 10**12)
+
+    mean_masses = [bin_mean_mass(curr_bin) for curr_bin in galaxy_bins]
+
+    # delete all the points with a rate of zero
+    bad_indices = [n for n in range(0, len(rate_bins)) if rate_bins[n] == 0.0]
+
+    mean_masses = [mean_masses[i] for i in range(0, len(mean_masses)) if i not in bad_indices]
+    rate_bins = [rate_bins[i] for i in range(0, len(rate_bins)) if i not in bad_indices]
+
+    if verbose:
+        for i in range(0, len(rate_bins)):
+            print('10^' + str(10.0 + math.log10(mean_masses[i])),\
+                rate_bins[i],\
+                sep = '\t')
+
+    plt.scatter(mean_masses, rate_bins, c = 'r')
+
+    if verbose:
+        print('Sliding bin')
+    # add a plot for a sliding bin
+    sliding_bin_low_limits = log_bins(10**-3, 10**2, 350)
+    sliding_bin_width = (10**12 / 10**8) ** (1 / n_bins)
+    mean_masses = []
+    rate_bins = []
+
+    for low_limit in sliding_bin_low_limits:
+        high_limit = sliding_bin_width * low_limit
+
+        curr_bin = [curr_gal for curr_gal in list_galaxies if low_limit < curr_gal.stellar_mass_Lum < high_limit]
+
+        if len(curr_bin) == 0:
+            continue
+
+        total_rate = sn_rate_outskirts(curr_bin, 'Ia') + \
+                     sn_rate_outskirts(curr_bin, 'SE') + \
+                     sn_rate_outskirts(curr_bin, 'II')
+
+        mean_masses.append(bin_mean_mass(curr_bin))
+        rate_bins.append(total_rate * 10**12)
+
+    # delete all the points with a rate of zero
+    bad_indices = [n for n in range(0, len(rate_bins)) if rate_bins[n] == 0.0]
+
+    mean_masses = [mean_masses[i] for i in range(0, len(mean_masses)) if i not in bad_indices]
+    rate_bins = [rate_bins[i] for i in range(0, len(rate_bins)) if i not in bad_indices]
+
+    if verbose:
+        print('Number of bins for moving mass:', len(rate_bins))
+    if verbose:
+        for i in range(0, len(rate_bins)):
+            print('Mean mass:', '%.3e' % mean_masses[i], '\tRate:', rate_bins[i])
+
+    plt.plot(mean_masses, rate_bins)
+
+    plt.title('Supernova Rate in Outskirts (bins = ' + str(n_bins) + ')')
+    plt.xlabel('Stellar Mass (10^10 Msun)')
+    plt.ylabel('SNum (10^-12 Msun^-1 yr^-1')
+    plt.xscale('log')
+    plt.yscale('log')
+    plt.xlim([10**-2.5, 10**2.5])
+    plt.ylim([0.001, 30])
+
+    if not save_graph:
+        plt.show()
+    else:
+        plt.savefig('..\\..\\rate_images\\out_rate_bins' + str(n_bins) + '.png', bbox_inches = 'tight')
+        plt.gcf().clear()
+
 def __main__():
     print(" *** sne_outskirts.py *** ")
 
-    outskirts_rate_vs_mass(5)
+    #hist_total_sne_by_stellar_mass(10)
+
+    for n in range(2, 30):
+        print('Saving image for n =', n)
+        total_sn_rate_outskirts(n, save_graph=True, verbose=False)
 
 __main__()
 
