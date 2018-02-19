@@ -1,3 +1,5 @@
+import scipy.stats
+
 # returns the rate of a certain type of supernova in a bin of galaxies
 def sn_rate(galaxy_bin, sn_type):
     total_sne = 0
@@ -69,5 +71,6 @@ def sn_rate_outskirts(galaxy_bin, sn_type):
         else:
             return None
 
+    sne_err_low, sne_err_high = scipy.stats.poisson.interval(0.68, total_sne)
 
-    return total_sne / control_time_sum
+    return total_sne / control_time_sum, (total_sne - sne_err_low) / control_time_sum, (sne_err_high - total_sne) / control_time_sum

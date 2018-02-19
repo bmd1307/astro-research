@@ -5,6 +5,7 @@ import time
 import math
 import matplotlib.pyplot as plt
 import numpy as np
+import scipy.stats
 
 from galaxy_data import *
 from supernova_data import *
@@ -487,7 +488,7 @@ def hist_total_sne_by_stellar_mass(n_bins):
     plt.xscale('log')
     plt.show()
 
-def total_sn_rate_outskirts(n_bins, save_graph = False, verbose = True):
+def total_sn_rate_outskirts(n_bins, save_graph = False, verbose = True, show_graph = True):
     # parses the full sample of supernovae
     gal_dict = {}
     parse_galaxy_file(gal_dict, 'table2.dat', 'galaxy-full.txt')
@@ -524,14 +525,30 @@ def total_sn_rate_outskirts(n_bins, save_graph = False, verbose = True):
         galaxy_bins.append(galaxy_bin)
 
     rate_bins = []
+    low_err_bins = []
+    high_err_bins = []
 
     for curr_bin in galaxy_bins:
-        total_rate = sn_rate_outskirts(curr_bin, 'Ia') + \
-                     sn_rate_outskirts(curr_bin, 'SE') + \
-                     sn_rate_outskirts(curr_bin, 'II')
+        curr_Ia_rate = sn_rate_outskirts(curr_bin, 'Ia')
+        curr_SE_rate = sn_rate_outskirts(curr_bin, 'SE')
+        curr_II_rate = sn_rate_outskirts(curr_bin, 'II')
+
+        total_rate = curr_Ia_rate[0] + \
+                     curr_SE_rate[0] + \
+                     curr_II_rate[0]
+
+        total_low = curr_Ia_rate[1] + \
+                    curr_SE_rate[1] + \
+                    curr_II_rate[1]
+
+        total_high = curr_Ia_rate[2] + \
+                     curr_SE_rate[2] + \
+                     curr_II_rate[2]
 
         # convert to SNuM
         rate_bins.append(total_rate * 10**12)
+        low_err_bins.append(total_low * 10**12)
+        high_err_bins.append(total_high * 10**12)
 
     mean_masses = [bin_mean_mass(curr_bin) for curr_bin in galaxy_bins]
 
@@ -540,6 +557,8 @@ def total_sn_rate_outskirts(n_bins, save_graph = False, verbose = True):
 
     mean_masses = [mean_masses[i] for i in range(0, len(mean_masses)) if i not in bad_indices]
     rate_bins = [rate_bins[i] for i in range(0, len(rate_bins)) if i not in bad_indices]
+    low_err_bins = [low_err_bins[i] for i in range(0, len(low_err_bins)) if i not in bad_indices]
+    high_err_bins = [high_err_bins[i] for i in range(0, len(high_err_bins)) if i not in bad_indices]
 
     if verbose:
         for i in range(0, len(rate_bins)):
@@ -547,7 +566,16 @@ def total_sn_rate_outskirts(n_bins, save_graph = False, verbose = True):
                 rate_bins[i],\
                 sep = '\t')
 
-    plt.scatter(mean_masses, rate_bins, c = 'r')
+    #plt.scatter(mean_masses, rate_bins, c = 'r')
+    plt.errorbar(mean_masses, rate_bins, yerr = [high_err_bins, low_err_bins], color = 'r', zorder = 10)
+
+    fit_coefficient, fit_exponent = fit_exp(mean_masses, rate_bins)
+
+    rate = lambda stellar_mass_10: fit_coefficient * stellar_mass_10 ** fit_exponent
+
+    fit_xs = [10**n for n in range(-2, 3)]
+    fit_ys = [rate(x) for x in fit_xs]
+    plt.plot(fit_xs, fit_ys, color = 'lime', zorder = 20)
 
     if verbose:
         print('Sliding bin')
@@ -556,6 +584,8 @@ def total_sn_rate_outskirts(n_bins, save_graph = False, verbose = True):
     sliding_bin_width = (10**12 / 10**8) ** (1 / n_bins)
     mean_masses = []
     rate_bins = []
+    low_err_bins = []
+    high_err_bins = []
 
     for low_limit in sliding_bin_low_limits:
         high_limit = sliding_bin_width * low_limit
@@ -565,18 +595,35 @@ def total_sn_rate_outskirts(n_bins, save_graph = False, verbose = True):
         if len(curr_bin) == 0:
             continue
 
-        total_rate = sn_rate_outskirts(curr_bin, 'Ia') + \
-                     sn_rate_outskirts(curr_bin, 'SE') + \
-                     sn_rate_outskirts(curr_bin, 'II')
+        curr_Ia_rate = sn_rate_outskirts(curr_bin, 'Ia')
+        curr_SE_rate = sn_rate_outskirts(curr_bin, 'SE')
+        curr_II_rate = sn_rate_outskirts(curr_bin, 'II')
+
+        total_rate = curr_Ia_rate[0] + \
+                     curr_SE_rate[0] + \
+                     curr_II_rate[0]
+
+        total_low = curr_Ia_rate[1] + \
+                    curr_SE_rate[1] + \
+                    curr_II_rate[1]
+
+        total_high = curr_Ia_rate[2] + \
+                     curr_SE_rate[2] + \
+                     curr_II_rate[2]
 
         mean_masses.append(bin_mean_mass(curr_bin))
         rate_bins.append(total_rate * 10**12)
+        low_err_bins.append(total_low * 10**12)
+        high_err_bins.append(total_high * 10**12)
+
 
     # delete all the points with a rate of zero
     bad_indices = [n for n in range(0, len(rate_bins)) if rate_bins[n] == 0.0]
 
     mean_masses = [mean_masses[i] for i in range(0, len(mean_masses)) if i not in bad_indices]
     rate_bins = [rate_bins[i] for i in range(0, len(rate_bins)) if i not in bad_indices]
+    low_err_bins = [low_err_bins[i] for i in range(0, len(low_err_bins)) if i not in bad_indices]
+    high_err_bins = [high_err_bins[i] for i in range(0, len(high_err_bins)) if i not in bad_indices]
 
     if verbose:
         print('Number of bins for moving mass:', len(rate_bins))
@@ -584,7 +631,12 @@ def total_sn_rate_outskirts(n_bins, save_graph = False, verbose = True):
         for i in range(0, len(rate_bins)):
             print('Mean mass:', '%.3e' % mean_masses[i], '\tRate:', rate_bins[i])
 
-    plt.plot(mean_masses, rate_bins)
+    plt.plot(mean_masses, rate_bins, zorder = 5)
+
+    upper_line = [rate_bins[i] + high_err_bins[i] for i in range(0, len(rate_bins))]
+    lower_line = [rate_bins[i] - low_err_bins[i] for i in range(0, len(rate_bins))]
+
+    plt.fill_between(mean_masses, lower_line, upper_line, facecolor = 'gainsboro', zorder = 1)
 
     plt.title('Supernova Rate in Outskirts (bins = ' + str(n_bins) + ')')
     plt.xlabel('Stellar Mass (10^10 Msun)')
@@ -594,20 +646,42 @@ def total_sn_rate_outskirts(n_bins, save_graph = False, verbose = True):
     plt.xlim([10**-2.5, 10**2.5])
     plt.ylim([0.001, 30])
 
-    if not save_graph:
+    if show_graph:
         plt.show()
-    else:
+
+    if save_graph:
         plt.savefig('..\\..\\rate_images\\out_rate_bins' + str(n_bins) + '.png', bbox_inches = 'tight')
         plt.gcf().clear()
+
+def fit_exp(xs, ys):
+    logxs = [math.log10(curr_x) for curr_x in xs]
+    logys = [math.log10(curr_y) for curr_y in ys]
+
+    results = scipy.stats.linregress(logxs, logys)
+
+    print('Fitting a line to the log-log plot:')
+    print('\tSlope:', results.slope, sep = '\t')
+    print('\tIntercept:', results.intercept, sep = '\t')
+    print('\tR Value:', results.rvalue, sep='\t')
+    print('\tP Value:', results.pvalue, sep='\t')
+    print('\tSTD Err:', results.stderr, sep='\t')
+
+    print('\tCoefficient:', 10**results.intercept)
+    print('\tExponent:', results.slope)
+
+    return 10**results.intercept, results.slope
+
 
 def __main__():
     print(" *** sne_outskirts.py *** ")
 
     #hist_total_sne_by_stellar_mass(10)
 
-    for n in range(2, 30):
-        print('Saving image for n =', n)
-        total_sn_rate_outskirts(n, save_graph=True, verbose=False)
+    #for n in range(2, 25):
+    #    print('Saving image for n =', n)
+    #    total_sn_rate_outskirts(n, save_graph=True, verbose=False, show_graph=False)
+
+    total_sn_rate_outskirts(10)
 
 __main__()
 
