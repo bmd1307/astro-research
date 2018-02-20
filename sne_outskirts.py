@@ -488,7 +488,8 @@ def hist_total_sne_by_stellar_mass(n_bins):
     plt.xscale('log')
     plt.show()
 
-def total_sn_rate_outskirts(n_bins, save_graph = False, verbose = True, show_graph = True):
+def total_sn_rate_outskirts(n_bins, save_graph = False, verbose = True, show_graph = True,\
+                            rate_function = sn_rate_outskirts, title = 'Supernova Rate in Outskirts', yrange = [0.001, 30]):
     # parses the full sample of supernovae
     gal_dict = {}
     parse_galaxy_file(gal_dict, 'table2.dat', 'galaxy-full.txt')
@@ -529,9 +530,9 @@ def total_sn_rate_outskirts(n_bins, save_graph = False, verbose = True, show_gra
     high_err_bins = []
 
     for curr_bin in galaxy_bins:
-        curr_Ia_rate = sn_rate_outskirts(curr_bin, 'Ia')
-        curr_SE_rate = sn_rate_outskirts(curr_bin, 'SE')
-        curr_II_rate = sn_rate_outskirts(curr_bin, 'II')
+        curr_Ia_rate = rate_function(curr_bin, 'Ia')
+        curr_SE_rate = rate_function(curr_bin, 'SE')
+        curr_II_rate = rate_function(curr_bin, 'II')
 
         total_rate = curr_Ia_rate[0] + \
                      curr_SE_rate[0] + \
@@ -577,6 +578,10 @@ def total_sn_rate_outskirts(n_bins, save_graph = False, verbose = True, show_gra
     fit_ys = [rate(x) for x in fit_xs]
     plt.plot(fit_xs, fit_ys, color = 'lime', zorder = 20)
 
+    fit_func_str = ('%1.3f' % fit_coefficient) + ' * M* ^ ' + ('%1.3f' % fit_exponent)
+
+    print('Fit Function (10^10 Msun -> SNuM):', fit_func_str)
+
     if verbose:
         print('Sliding bin')
     # add a plot for a sliding bin
@@ -595,9 +600,9 @@ def total_sn_rate_outskirts(n_bins, save_graph = False, verbose = True, show_gra
         if len(curr_bin) == 0:
             continue
 
-        curr_Ia_rate = sn_rate_outskirts(curr_bin, 'Ia')
-        curr_SE_rate = sn_rate_outskirts(curr_bin, 'SE')
-        curr_II_rate = sn_rate_outskirts(curr_bin, 'II')
+        curr_Ia_rate = rate_function(curr_bin, 'Ia')
+        curr_SE_rate = rate_function(curr_bin, 'SE')
+        curr_II_rate = rate_function(curr_bin, 'II')
 
         total_rate = curr_Ia_rate[0] + \
                      curr_SE_rate[0] + \
@@ -638,13 +643,17 @@ def total_sn_rate_outskirts(n_bins, save_graph = False, verbose = True, show_gra
 
     plt.fill_between(mean_masses, lower_line, upper_line, facecolor = 'gainsboro', zorder = 1)
 
-    plt.title('Supernova Rate in Outskirts (bins = ' + str(n_bins) + ')')
+    plt.title(title + ' (bins = ' + str(n_bins) + ')')
+    leg = plt.legend(['Linear Fit to Fixed Bins\n(' + fit_func_str + ')', 'Sliding Bin',\
+                'Sliding bin error (68% Poisson)',\
+                'Fixed Bin'])
+    leg.set_zorder(30)
     plt.xlabel('Stellar Mass (10^10 Msun)')
     plt.ylabel('SNum (10^-12 Msun^-1 yr^-1')
     plt.xscale('log')
     plt.yscale('log')
     plt.xlim([10**-2.5, 10**2.5])
-    plt.ylim([0.001, 30])
+    plt.ylim(yrange)
 
     if show_graph:
         plt.show()
@@ -681,7 +690,8 @@ def __main__():
     #    print('Saving image for n =', n)
     #    total_sn_rate_outskirts(n, save_graph=True, verbose=False, show_graph=False)
 
-    total_sn_rate_outskirts(10)
+    total_sn_rate_outskirts(10, rate_function=sn_rate_total, title = 'Total Supernova Rate vs Stellar Mass', yrange=[0.01, 300])
+    total_sn_rate_outskirts(10) # calculates outskirts by default
 
 __main__()
 
