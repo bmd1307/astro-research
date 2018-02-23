@@ -6,6 +6,7 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.stats
+import scipy.integrate as integrate
 
 from galaxy_data import *
 from supernova_data import *
@@ -680,6 +681,149 @@ def fit_exp(xs, ys):
 
     return 10**results.intercept, results.slope
 
+def total_rate_dwarfs():
+    # parses the full sample of supernovae
+    gal_dict = {}
+    parse_galaxy_file(gal_dict, 'table2.dat', 'galaxy-full.txt')
+
+    # parses the full sample of supernovae
+    sne_list = []
+    parse_sne_file(sne_list, 'sn-full.txt')
+
+    pair_galaxies_and_sne(gal_dict, sne_list)
+
+    # limits the list of galaxies to the full_optimal
+    list_galaxies = [curr_gal for curr_gal in gal_dict.values() if curr_gal.full_optimal and 0.0 < curr_gal.stellar_mass_Lum < 0.1]
+
+    num_sne = sum([len(curr_gal.supernovae) for curr_gal in list_galaxies])
+
+    mean_mass = bin_mean_mass(list_galaxies)
+
+    print('Found', len(list_galaxies), 'dwarf galaxies (M* < 10^9 Msun)')
+    print('These galaxies host', num_sne, 'supernovae')
+    print('Mean galaxy mass:', '%.3e' % (mean_mass * 1e10), 'Msun')
+
+    rate_Ia, low_Ia, high_Ia = sn_rate_total(list_galaxies, 'Ia')
+    rate_SE, low_SE, high_SE = sn_rate_total(list_galaxies, 'SE')
+    rate_II, low_II, high_II = sn_rate_total(list_galaxies, 'II')
+
+    print('Type Ia rate:', '%1.3f' % (rate_Ia * 1e12), '(-' '%1.3f' % (low_Ia * 1e12), ', +' + \
+          '%1.3f' % (high_Ia * 1e12), ')', '* 10^-12 SNe yr^-1 Msun^-1')
+    print('Type SE rate:', '%1.3f' % (rate_SE * 1e12), '(-' '%1.3f' % (low_SE * 1e12), ', +' + \
+          '%1.3f' % (high_SE * 1e12), ')', '* 10^-12 SNe yr^-1 Msun^-1')
+    print('Type II rate:', '%1.3f' % (rate_II * 1e12), '(-' '%1.3f' % (low_II * 1e12), ', +' + \
+          '%1.3f' % (high_II * 1e12), ')', '* 10^-12 SNe yr^-1 Msun^-1')
+    print()
+
+    total_rate = rate_Ia + rate_SE + rate_II
+    total_low = low_Ia + low_SE + low_II
+    total_high = high_Ia + high_SE + high_II
+
+    print('Total rate:', '%1.3f' % (total_rate * 1e12), '(-' '%1.3f' % (total_low * 1e12), ', +' + \
+          '%1.3f' % (total_high * 1e12), ')', '* 10^-12 SNe yr^-1 Msun^-1')
+
+    # calculates the number of SNe per millenium
+    sne_per_mill = total_rate * mean_mass * 1e10 * 1e3
+    sne_per_mill_low = total_low * mean_mass * 1e10 * 1e3
+    sne_per_mill_high = total_high * mean_mass * 1e10 * 1e3
+
+    print('SNe / millenium (rate * avg mass):', \
+          '%1.3f' % sne_per_mill, '(-', '%1.3f' % sne_per_mill_low, ',+', '%1.3f' % sne_per_mill_high, ')',
+          'SNe / (1000 yr) ')
+
+
+def total_rate_outskirts_spirals():
+    # parses the full sample of supernovae
+    gal_dict = {}
+    parse_galaxy_file(gal_dict, 'table2.dat', 'galaxy-full.txt')
+
+    # parses the full sample of supernovae
+    sne_list = []
+    parse_sne_file(sne_list, 'sn-full.txt')
+
+    pair_galaxies_and_sne(gal_dict, sne_list)
+
+    # limits the list of galaxies to the full_optimal with spirals
+    list_galaxies = [curr_gal for curr_gal in gal_dict.values() if curr_gal.full_optimal and curr_gal.hubble_type[0] == 'S']
+
+    num_sne = sum([len(curr_gal.supernovae) for curr_gal in list_galaxies])
+
+    mean_mass = bin_mean_mass(list_galaxies)
+
+    print('Found', len(list_galaxies), 'spiral galaxies')
+    print('These galaxies host', num_sne, 'supernovae')
+    print('Mean galaxy mass:', '%.3e' % (mean_mass * 1e10), 'Msun')
+
+    rate_Ia, low_Ia, high_Ia = sn_rate_outskirts(list_galaxies, 'Ia')
+    rate_SE, low_SE, high_SE = sn_rate_outskirts(list_galaxies, 'SE')
+    rate_II, low_II, high_II = sn_rate_outskirts(list_galaxies, 'II')
+
+    print('Type Ia rate:', '%1.3f' % (rate_Ia * 1e12), '(-' '%1.3f' % (low_Ia * 1e12), ', +' + \
+          '%1.3f' % (high_Ia * 1e12), ')', '* 10^-12 SNe yr^-1 Msun^-1')
+    print('Type SE rate:', '%1.3f' % (rate_SE * 1e12), '(-' '%1.3f' % (low_SE * 1e12), ', +' + \
+          '%1.3f' % (high_SE * 1e12), ')', '* 10^-12 SNe yr^-1 Msun^-1')
+    print('Type II rate:', '%1.3f' % (rate_II * 1e12), '(-' '%1.3f' % (low_II * 1e12), ', +' + \
+          '%1.3f' % (high_II * 1e12), ')', '* 10^-12 SNe yr^-1 Msun^-1')
+    print()
+
+    total_rate = rate_Ia + rate_SE + rate_II
+    total_low = low_Ia + low_SE + low_II
+    total_high = high_Ia + high_SE + high_II
+
+    print('Total rate:', '%1.3f' % (total_rate * 1e12), '(-' '%1.3f' % (total_low * 1e12), ', +' + \
+          '%1.3f' % (total_high * 1e12), ')', '* 10^-12 SNe yr^-1 Msun^-1')
+
+    # calculates the number of SNe per millenium
+    sne_per_mill = total_rate * mean_mass * 1e10 * 1e3
+    sne_per_mill_low = total_low * mean_mass * 1e10 * 1e3
+    sne_per_mill_high = total_high * mean_mass * 1e10 * 1e3
+
+    print('SNe / millenium (rate * avg mass):', \
+          '%1.3f' % sne_per_mill, '(-', '%1.3f' % sne_per_mill_low, ',+', '%1.3f' % sne_per_mill_high, ')',
+          'SNe / (1000 yr) ')
+
+def compare_outskirts_to_dwarfs():
+    print('*' * 80)
+    print('Calculating the total supernova rate in dwarf galaxies')
+    print('*' * 80)
+    print()
+
+    total_rate_dwarfs()
+
+    print()
+    print('*' * 80)
+    print('Calculating the outskirts supernova rate in spiral galaxies')
+    print('*' * 80)
+
+    total_rate_outskirts_spirals()
+
+def profile_params(mass_Msun):
+    # returns sigma_0, h_r, sigma_bo, R_b, n
+
+    log_stellar_mass = math.log10(mass_Msun)
+
+    if 9.0 < log_stellar_mass < 9.5:
+        return 51.1, 1.146, 178.6, 0.597, 1.681
+    elif 9.5 < log_stellar_mass < 10.0:
+        return 192.6, 1.975, 827, 0.171, 1.752
+    elif 10.0 < log_stellar_mass < 10.5:
+        return 500.3, 2.182, 4674.2, 0.167, 1.444
+    elif 10.5 < log_stellar_mass < 11.0:
+        return 733.9, 2.934, 24011.7, 0.101, 1.773
+    else:
+        return None
+
+def mass_in_range_diaz_garcia(stellar_mass_Msun, r1_kpc, r2_kpc):
+    params = profile_params(stellar_mass_Msun)
+    if params is None:
+        return None
+
+    sigma_0, h_r, sigma_bo, R_b, n = params
+
+    surface_density_func = lambda r_kpc: sigma_bo * math.exp(-(r_kpc / R_b)**(1/n)) + sigma_0 * math.exp(-r_kpc/h_r)
+
+    # integrate 2 pi r Sigma(r) from r1 to r2
+    integral_result = integrate.quad((lambda r: 2 * math.pi * r * surface_density_func(r)), r1_kpc, r2_kpc)
 
 def __main__():
     print(" *** sne_outskirts.py *** ")
@@ -690,8 +834,11 @@ def __main__():
     #    print('Saving image for n =', n)
     #    total_sn_rate_outskirts(n, save_graph=True, verbose=False, show_graph=False)
 
-    total_sn_rate_outskirts(10, rate_function=sn_rate_total, title = 'Total Supernova Rate vs Stellar Mass', yrange=[0.01, 300])
-    total_sn_rate_outskirts(10) # calculates outskirts by default
+    #total_sn_rate_outskirts(10, rate_function=sn_rate_total, title = 'Total Supernova Rate vs Stellar Mass', yrange=[0.01, 300])
+    #total_sn_rate_outskirts(10) # calculates outskirts by default
+
+    for i in range(7, 13):
+
 
 __main__()
 

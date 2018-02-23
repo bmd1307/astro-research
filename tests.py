@@ -182,3 +182,6 @@ def count_types_in_outskirts():
     print('SNe Ia in outskirts:', num_Ia)
     print('SE SNe in outskirts:', num_SE)
     print('SNe II in outskirts:', num_II)
+
+def test_outskirts_mass_diaz_garcia():
+    pass # TODO complete this
