@@ -14,6 +14,7 @@ from color_profile import *
 from spitzer_profile import *
 from rate_calc import *
 from cross_reference import *
+from tests import *
 
 # normalizes each value in a list to 0.0 - 1.0
 # ex [1, 2, 3, 5] -> [0, 0.25, 0.5, 1.0]
@@ -813,17 +814,126 @@ def profile_params(mass_Msun):
     else:
         return None
 
-def mass_in_range_diaz_garcia(stellar_mass_Msun, r1_kpc, r2_kpc):
+def mass_in_range_diaz_garcia(stellar_mass_Msun, r1_pc, r2_pc):
     params = profile_params(stellar_mass_Msun)
     if params is None:
         return None
 
     sigma_0, h_r, sigma_bo, R_b, n = params
 
-    surface_density_func = lambda r_kpc: sigma_bo * math.exp(-(r_kpc / R_b)**(1/n)) + sigma_0 * math.exp(-r_kpc/h_r)
+    surface_density_func = lambda r_pc: sigma_bo * math.exp(-(r_pc * 0.001 / R_b)**(1/n)) + sigma_0 * math.exp(-r_pc * 0.001 / h_r)
 
     # integrate 2 pi r Sigma(r) from r1 to r2
-    integral_result = integrate.quad((lambda r: 2 * math.pi * r * surface_density_func(r)), r1_kpc, r2_kpc)
+    integral_result = integrate.quad((lambda r: 2 * math.pi * r * surface_density_func(r)), r1_pc, r2_pc)
+
+    return integral_result[0]
+
+def test_outskirts_mass_diaz_garcia():
+    # parses the full sample of supernovae
+    gal_dict = {}
+    parse_galaxy_file(gal_dict, 'table2.dat', 'galaxy-full.txt')
+
+    list_galaxies = [curr_gal for curr_gal in gal_dict.values() if 1e9 < (curr_gal.stellar_mass_Lum * 1e10) < 1e11]
+
+    print('List of', len(list_galaxies), 'galaxies.')
+
+    outskirts_ratio = lambda curr_gal: mass_in_range_diaz_garcia(curr_gal.stellar_mass_Lum * 1e10, curr_gal.r25_pc(), math.inf) /\
+                                        mass_in_range_diaz_garcia(curr_gal.stellar_mass_Lum * 1e10, 0.0, math.inf)
+
+    masses = [curr_gal.stellar_mass_Lum * 10**10 for curr_gal in list_galaxies]
+
+    ratios = [outskirts_ratio(curr_gal) for curr_gal in list_galaxies]
+
+    plt.scatter(masses, ratios)
+    plt.xscale('log')
+    plt.show()
+
+def sne_radial_data():
+    # parses the full sample of supernovae
+    gal_dict = {}
+    parse_galaxy_file(gal_dict, 'table2.dat', 'galaxy-full.txt')
+
+    # parses the full sample of supernovae (contains those of '?' type)
+    sne_list = []
+    parse_sne_file(sne_list, 'sn-full-optimal.txt')
+
+    pair_galaxies_and_sne(gal_dict, sne_list)
+
+    distance_ratios = [sn.distance_ratio('read') for sn in sne_list]
+
+    distance_ratios = list(filter(lambda x: 0.5 < x < 4.0, distance_ratios))
+
+    print(len(distance_ratios))
+
+    print(freedman_diaconis_nbins(distance_ratios))
+
+    counts, bin_lims =  np.histogram(distance_ratios, freedman_diaconis_nbins(distance_ratios))
+    print('counts:', counts)
+    print('bin_lims:', bin_lims)
+
+    bin_centers = [0.5 * (bin_lims[i] + bin_lims[i + 1]) for i in range(0, len(bin_lims) - 1)]
+
+    bin_width = (bin_lims[-1] - bin_lims[0]) / (len(bin_lims) - 1)
+
+    good_indices = [i for i in range(0, len(counts)) if counts[i] != 0]
+
+    counts = [counts[i] for i in good_indices]
+
+    bin_centers = [bin_centers[i] for i in good_indices]
+
+    # number of supernovae / (4 pi r dr). 4 pi r dr is the area of a ring with central radius 'r' and width '2dr'
+    sn_densities = [counts[i] / (4 * math.pi * bin_centers[i] * (0.5 * bin_width)) for i in range(0, len(bin_centers))]
+
+    print(sn_densities)
+
+    print('*** Fitting a SN count to an exp curve ***')
+    fit_exp(bin_centers, counts)
+
+    print('*** Fitting a SN densities to an exp curve ***')
+    density_coefficient, density_exponent = fit_exp(bin_centers, sn_densities)
+
+    density_func = lambda r: density_coefficient * r ** density_exponent
+
+    fit_func_str = ('%1.3f' % density_coefficient) + ' * (r / R25) ^ ' + ('%1.3f' % density_exponent)
+
+    # xs are the distance ratios from 0 - 5
+    fit_xs = [0.1 * n for n in range(1, 50)]
+    fit_ys = [density_func(x) for x in fit_xs]
+    plt.plot(fit_xs, fit_ys, color='lime', zorder=20)
+
+    plt.title('Supernova Density vs Distance Ratio')
+
+    plt.xlabel('Distance Ratio')
+    plt.ylabel('Supernova Density')
+    plt.xlim([0.4, 5.0])
+    plt.ylim([0.1, 1000])
+    plt.xscale('log')
+    plt.yscale('log')
+    #plt.scatter(bin_centers, counts, c='blue')
+    plt.scatter(bin_centers, sn_densities, c='red')
+
+    plt.legend(['Best fit: ' + fit_func_str, 'Supernova Density Bins'])
+
+    plt.show()
+
+def sne_radial_histogram():
+    # parses the full sample of supernovae
+    gal_dict = {}
+    parse_galaxy_file(gal_dict, 'table2.dat', 'galaxy-full.txt')
+
+    # parses the full sample of supernovae (contains those of '?' type)
+    sne_list = []
+    parse_sne_file(sne_list, 'sn-full-optimal.txt')
+
+    pair_galaxies_and_sne(gal_dict, sne_list)
+
+    distance_ratios = [sn.distance_ratio('read') for sn in sne_list]
+
+    plt.hist(distance_ratios, bins = freedman_diaconis_nbins(distance_ratios))
+    plt.title('Number of Supernovae vs Radius (r / R25)')
+    plt.xlabel('Distance Ratio (r / R25')
+    plt.ylabel('Number of SNe')
+    plt.show()
 
 def __main__():
     print(" *** sne_outskirts.py *** ")
@@ -837,7 +947,11 @@ def __main__():
     #total_sn_rate_outskirts(10, rate_function=sn_rate_total, title = 'Total Supernova Rate vs Stellar Mass', yrange=[0.01, 300])
     #total_sn_rate_outskirts(10) # calculates outskirts by default
 
-    for i in range(7, 13):
+    #test_outskirts_mass_diaz_garcia()
+
+    #sne_radial_data()
+
+    sne_radial_histogram()
 
 
 __main__()

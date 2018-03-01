@@ -39,6 +39,11 @@ class Galaxy:
         self.band_36                = None # band 36 data from the spitzer images
         self.band_45                = None  # band 36 data from the spitzer images
 
+    def r25_pc(self):
+        if self.maj_axis_min is None:
+            return None
+        return (0.5 * 60 * self.maj_axis_min) * (self.distance * 1e6) / 206265.0
+
     def construct_mass_profile(self):
         if self.color_profile == None:
             raise AttributeError('A mass profile cannot be constructed for galaxies with no color profiles')
