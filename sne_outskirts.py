@@ -17,14 +17,92 @@ from cross_reference import *
 from tests import *
 from experiments import *
 
+
+# ******************************************************************************
+# ***                          Helper Functions                              ***
+# ******************************************************************************
+
 # normalizes each value in a list to 0.0 - 1.0
 # ex [1, 2, 3, 5] -> [0, 0.25, 0.5, 1.0]
+# param: arr - the array to normalize
 def normalize(arr):
 
     max_val = max(arr)
     min_val = min(arr)
 
     return [(n - min_val) / (max_val - min_val) for n in arr]
+
+
+# produces an array of histogram bin limits increasing exponentially
+# ex log_bins(1, 1000, 3) -> [1, 10, 100, 1000]
+# param: low - the lower limit for the histogram
+# param: high - the upper limit for the histogram
+# param: n - the number of bins
+def log_bins(low, high, n):
+    return [low * 10 ** ((b / n) * math.log10(high/low)) for b in range(0, n+1)]
+
+
+# returns the count of a certain type of supernova in a bin (list) of galaxies
+# The valid types of supernovae: Ia, SE, and II
+# param: galaxy_bin - a list of Galaxy objects
+# param: sn_type, a string for the supernova type to be counted (valid values: "Ia", "SE", "II")
+def sn_count(galaxy_bin, sn_type):
+    total_sne = 0
+
+    for g in galaxy_bin:
+        if sn_type == 'Ia':
+            total_sne = total_sne + g.sne_Ia                # stellar mass is in 10^10 Msun
+        elif sn_type == 'SE':
+            total_sne = total_sne + g.sne_SE
+        elif sn_type == 'II':
+            total_sne = total_sne + g.sne_II
+        else:
+            return None
+    return total_sne
+
+
+# returns the mean of the stellar masses of a list of galaxy objects
+# param: galaxy_bin - a list of Galaxy objects
+def bin_mean_mass(galaxy_bin):
+    return sum([curr_gal.stellar_mass_Lum for curr_gal in galaxy_bin]) / len(galaxy_bin)
+
+
+# returns the ideal bin size for the values of 'arr' according to the freedman-diaconis equation:
+#   bin_width = 2 * IQR(data) * len(data)^(-1/3)
+# param: arr - the data to put into a bin
+def freedman_diaconis_nbins(arr):
+    h = 2 * np.subtract(*np.percentile(arr, [75, 25])) / len(arr)**(1/3)
+    return math.ceil((max(arr) - min(arr)) / h)
+
+
+# fits a power function to a series of x and y data using the linear regression on the logarithms of the x and y data
+# results of the regression are printed, and the parameters of the fucntion are returned
+# param: xs - the x values of the data (the independent variable)
+# param: ys - the y values of the data (the dependent variable)
+# returns: a tuple containing the coefficient and the exponent for the power function
+def fit_exp(xs, ys):
+    logxs = [math.log10(curr_x) for curr_x in xs]
+    logys = [math.log10(curr_y) for curr_y in ys]
+
+    results = scipy.stats.linregress(logxs, logys)
+
+    print('Fitting a line to the log-log plot:')
+    print('\tSlope:', results.slope, sep = '\t')
+    print('\tIntercept:', results.intercept, sep = '\t')
+    print('\tR Value:', results.rvalue, sep='\t')
+    print('\tP Value:', results.pvalue, sep='\t')
+    print('\tSTD Err:', results.stderr, sep='\t')
+
+    print('\tCoefficient:', 10**results.intercept)
+    print('\tExponent:', results.slope)
+
+    return 10**results.intercept, results.slope
+
+
+# ******************************************************************************
+# ***                          Primary Functions                             ***
+# ******************************************************************************
+
 
 # Recreates the plot in Figure 8 of Leaman et al., the cumulative distributions of the SN types (Ia, Ib, Ibc, Ic, II)
 def plot_sne_cumulative():
@@ -105,28 +183,11 @@ def plot_sne_cumulative():
     # displays the plot
     plt.show()
 
-def log_bins(low, high, n):
-    return [low * 10 ** ((b / n) * math.log10(high/low)) for b in range(0, n+1)]
 
-# returns the count of a certain type of supernova in a bin of galaxies
-def sn_count(galaxy_bin, sn_type):
-    total_sne = 0
-
-    for g in galaxy_bin:
-        if sn_type == 'Ia':
-            total_sne = total_sne + g.sne_Ia                # stellar mass is in 10^10 Msun
-        elif sn_type == 'SE':
-            total_sne = total_sne + g.sne_SE
-        elif sn_type == 'II':
-            total_sne = total_sne + g.sne_II
-        else:
-            return None
-    return total_sne
-
-def bin_mean_mass(galaxy_bin):
-    return sum([curr_gal.stellar_mass_Lum for curr_gal in galaxy_bin]) / len(galaxy_bin)
-
-def calc_sne_rate():
+# Recreates the supernova rate calculations by leaman and graur
+# Produces three plots of the supernova rates for type Ia, SE and II supernovae
+# param: n_bins - the number of bins to group
+def calc_sne_rate(n_bins):
     # parses the full sample of supernovae
     gal_dict = {}
     parse_galaxy_file(gal_dict, 'table2.dat')
@@ -148,8 +209,6 @@ def calc_sne_rate():
     print('Samples SNe II:', num_sne_II)
 
     list_galaxies = [curr_gal for curr_gal in gal_dict.values() if curr_gal.full_optimal]
-
-    n_bins = 1
 
     #                     10^8 Msun 10^12 Msun
     bin_limits = log_bins(0.01, 100, n_bins)
@@ -213,122 +272,9 @@ def calc_sne_rate():
 
         plt.show()
 
-def outskirts_rate_vs_mass(n_bins):
-    # parses the full sample of supernovae
-    gal_dict = {}
-    parse_galaxy_file(gal_dict, 'table2.dat', 'galaxy-full.txt')
 
-    # parses the full sample of supernovae (contains those of '?' type)
-    sne_list = []
-    parse_sne_file(sne_list, 'sn-full.txt')
-
-    pair_galaxies_and_sne(gal_dict, sne_list)
-
-    # break the galaxies into bins
-
-    list_galaxies = [curr_gal for curr_gal in gal_dict.values() if curr_gal.full_optimal]
-
-    #                     10^8 Msun 10^12 Msun
-    bin_limits = log_bins(0.01, 100, n_bins)
-
-    galaxy_bins = []
-
-    # for each mass bin
-    for bin_num in range(0, n_bins):
-        curr_bin_min = bin_limits[bin_num]
-        curr_bin_max = bin_limits[bin_num + 1]
-
-        galaxy_bin = []
-
-        # for each galaxy
-        for gal in list_galaxies:
-
-            # check if the galaxy is in the right mass range
-            if curr_bin_min < gal.stellar_mass_Lum and\
-               gal.stellar_mass_Lum < curr_bin_max:
-                galaxy_bin.append(gal)
-
-        galaxy_bins.append(galaxy_bin)
-
-
-
-    # find the rate for each bin
-
-    sne_types = ['Ia', 'SE', 'II']
-
-    for curr_sn_type in sne_types:
-        print('***', curr_sn_type, '***')
-
-        mean_masses = [0] * n_bins
-        sne_rates = [0] * n_bins
-
-        print('Bin', 'low limit mass', 'high limit mass', 'sne')
-        for bin_num in range(0, n_bins):
-
-            mean_masses[bin_num] = bin_mean_mass(galaxy_bins[bin_num]) * 10**10
-            # finds the rate of SNe just in the outskirts
-            sne_rates[bin_num] = sn_rate_outskirts(galaxy_bins[bin_num], curr_sn_type) * 10**12
-
-            print('mass:', mean_masses[bin_num], end = '\t')
-            print('rate:', sne_rates[bin_num])
-
-        plt.scatter(mean_masses, sne_rates)
-        plt.yscale('log')
-        plt.xscale('log')
-
-        #plt.xlim(10**8, 10**12)
-
-        #plt.ylim(10**-2, 10**1)
-
-        plt.title('SNe ' + curr_sn_type)
-
-        plt.show()
-
-def plot_num_sne_vs_radius():
-    # parses the full sample of supernovae (contains those of '?' type)
-    sne_list = []
-    parse_sne_file(sne_list, 'sn-full-optimal.txt')
-
-    g_centric_radii = [sn.distance_ratio("read") for sn in sne_list]
-
-    g_centric_radii_1_plus = [curr_rad for curr_rad in g_centric_radii if curr_rad >= 1.0]
-
-    g_centric_radii_1_to_2 = [curr_rad for curr_rad in g_centric_radii if curr_rad >= 1.0 and curr_rad <= 2.0]
-
-
-    print('Total SNe                    ', len(g_centric_radii))
-    print('SNe in outskirts (beyond r25)', len(g_centric_radii_1_plus))
-    print('SNe from r25 < r < 2 * r25   ', len(g_centric_radii_1_to_2))
-
-    print('50th percentile for outskirts SNe:', np.percentile(g_centric_radii_1_plus, 50))
-
-    plt.hist(g_centric_radii, cumulative = True, normed = True, bins = freedman_diaconis_nbins(g_centric_radii))
-    plt.show()
-
-    plt.hist(g_centric_radii, bins = freedman_diaconis_nbins(g_centric_radii))
-
-    plt.show()
-
-    plt.hist(g_centric_radii, log = True, bins = freedman_diaconis_nbins(g_centric_radii))
-
-    plt.show()
-
-    plt.hist(g_centric_radii_1_plus, bins = freedman_diaconis_nbins(g_centric_radii_1_plus))
-
-    plt.show()
-
-    plt.hist(g_centric_radii_1_plus, bins = freedman_diaconis_nbins(g_centric_radii_1_plus), log = True)
-
-    plt.show()
-
-    plt.hist(g_centric_radii_1_to_2, log = True)
-
-    plt.show()
-
-def freedman_diaconis_nbins(arr):
-    h = 2 * np.subtract(*np.percentile(arr, [75, 25])) / len(arr)**(1/3)
-    return math.ceil((max(arr) - min(arr)) / h)
-
+# Plots a step function of the number of supernovae vs stellar mass
+# A line is plotted for the total supernovae and the outskirts supernovae (beyond r25)
 def hist_total_sne_by_stellar_mass(n_bins):
     # parses the full sample of supernovae
     gal_dict = {}
@@ -408,6 +354,20 @@ def hist_total_sne_by_stellar_mass(n_bins):
     plt.xscale('log')
     plt.show()
 
+
+# Calculates the supernova rate in the outskirts. Recreates the plots as seen in Graur's paper.
+# The rate is calculated with fixed bins and a sliding bins. The number of fixed bins is n_bins, and the sliding bin is
+# calculated with the same width
+# param: n_bins - the number of bins to calculate the rate
+# param: save_graph - saves the graph directly to a png file. File name = out_rate_bins<n_bins>.png. False by default
+# param: verbose - prints a lot of extra information about how the calculation is progressing and detailed results
+#                   True by default
+# param: show_graph - displays the graph and pauses the program. (default is True)
+# param: rate_function - the function which performs the rate calculation valid functions: sn_rate_outskirts (default),
+#                        sn_rate_total.
+# param: title - the title for the graph. '(bins = <n_bins>' is added to this name. default: 'Supernova Rate in
+#                   Outskirts'
+# param: yrange - the lower and upper limits of the y axis (default: [0.001, 30])
 def total_sn_rate_outskirts(n_bins, save_graph = False, verbose = True, show_graph = True,\
                             rate_function = sn_rate_outskirts, title = 'Supernova Rate in Outskirts', yrange = [0.001, 30]):
     # parses the full sample of supernovae
@@ -582,24 +542,9 @@ def total_sn_rate_outskirts(n_bins, save_graph = False, verbose = True, show_gra
         plt.savefig('..\\..\\rate_images\\out_rate_bins' + str(n_bins) + '.png', bbox_inches = 'tight')
         plt.gcf().clear()
 
-def fit_exp(xs, ys):
-    logxs = [math.log10(curr_x) for curr_x in xs]
-    logys = [math.log10(curr_y) for curr_y in ys]
 
-    results = scipy.stats.linregress(logxs, logys)
-
-    print('Fitting a line to the log-log plot:')
-    print('\tSlope:', results.slope, sep = '\t')
-    print('\tIntercept:', results.intercept, sep = '\t')
-    print('\tR Value:', results.rvalue, sep='\t')
-    print('\tP Value:', results.pvalue, sep='\t')
-    print('\tSTD Err:', results.stderr, sep='\t')
-
-    print('\tCoefficient:', 10**results.intercept)
-    print('\tExponent:', results.slope)
-
-    return 10**results.intercept, results.slope
-
+# calculates the supernova rate in the dwarf galaxies in the galaxy sample
+# prints the details of the calculation
 def total_rate_dwarfs():
     # parses the full sample of supernovae
     gal_dict = {}
@@ -650,6 +595,9 @@ def total_rate_dwarfs():
           '%1.3f' % sne_per_mill, '(-', '%1.3f' % sne_per_mill_low, ',+', '%1.3f' % sne_per_mill_high, ')',
           'SNe / (1000 yr) ')
 
+
+# calculates the supernova rate in the outskirts of the spiral galaxies in the galaxy sample
+# prints the details of the calculation
 def total_rate_outskirts_spirals():
     # parses the full sample of supernovae
     gal_dict = {}
@@ -700,6 +648,8 @@ def total_rate_outskirts_spirals():
           '%1.3f' % sne_per_mill, '(-', '%1.3f' % sne_per_mill_low, ',+', '%1.3f' % sne_per_mill_high, ')',
           'SNe / (1000 yr) ')
 
+
+# runs total_rate_dwarfs and total_rate_outskirts_spirals
 def compare_outskirts_to_dwarfs():
     print('*' * 80)
     print('Calculating the total supernova rate in dwarf galaxies')
@@ -715,6 +665,9 @@ def compare_outskirts_to_dwarfs():
 
     total_rate_outskirts_spirals()
 
+
+# finds the radial dependence of supernovae. Groups the supernovae into an ideal number of bins by radius, and fits a
+# power function to the supernova density as a function of radius. Displays a graph of the supernova rates
 def sne_radial_data():
     # parses the full sample of supernovae
     gal_dict = {}
@@ -783,6 +736,9 @@ def sne_radial_data():
 
     plt.show()
 
+
+# plots a histogram of the supernova frequency vs radius.
+# the number of bins is chosen by the freedman-diaconis equation
 def sne_radial_histogram():
     # parses the full sample of supernovae
     gal_dict = {}
@@ -802,6 +758,8 @@ def sne_radial_histogram():
     plt.ylabel('Number of SNe')
     plt.show()
 
+
+# call the desired function from this __main__ function
 def __main__():
     print(" *** sne_outskirts.py *** ")
 

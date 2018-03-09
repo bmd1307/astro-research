@@ -13,6 +13,7 @@ from rate_calc import *
 from cross_reference import *
 from tests import *
 
+
 def sn_rate_by_radius(num_bins, sn_type, low_limit, high_limit):
     # parses the full sample of supernovae
     gal_dict = {}
@@ -96,6 +97,7 @@ def sn_rate_by_radius(num_bins, sn_type, low_limit, high_limit):
     plt.plot(bin_limits[:-1], sn_rate_bins)
     plt.show()
 
+
 def profile_params(mass_Msun):
     # returns sigma_0, h_r, sigma_bo, R_b, n
 
@@ -112,6 +114,7 @@ def profile_params(mass_Msun):
     else:
         return None
 
+
 def mass_in_range_diaz_garcia(stellar_mass_Msun, r1_pc, r2_pc):
     params = profile_params(stellar_mass_Msun)
     if params is None:
@@ -125,6 +128,7 @@ def mass_in_range_diaz_garcia(stellar_mass_Msun, r1_pc, r2_pc):
     integral_result = integrate.quad((lambda r: 2 * math.pi * r * surface_density_func(r)), r1_pc, r2_pc)
 
     return integral_result[0]
+
 
 def test_outskirts_mass_diaz_garcia():
     # parses the full sample of supernovae
@@ -144,4 +148,46 @@ def test_outskirts_mass_diaz_garcia():
 
     plt.scatter(masses, ratios)
     plt.xscale('log')
+    plt.show()
+
+
+def plot_num_sne_vs_radius():
+    # parses the full sample of supernovae (contains those of '?' type)
+    sne_list = []
+    parse_sne_file(sne_list, 'sn-full-optimal.txt')
+
+    g_centric_radii = [sn.distance_ratio("read") for sn in sne_list]
+
+    g_centric_radii_1_plus = [curr_rad for curr_rad in g_centric_radii if curr_rad >= 1.0]
+
+    g_centric_radii_1_to_2 = [curr_rad for curr_rad in g_centric_radii if curr_rad >= 1.0 and curr_rad <= 2.0]
+
+
+    print('Total SNe                    ', len(g_centric_radii))
+    print('SNe in outskirts (beyond r25)', len(g_centric_radii_1_plus))
+    print('SNe from r25 < r < 2 * r25   ', len(g_centric_radii_1_to_2))
+
+    print('50th percentile for outskirts SNe:', np.percentile(g_centric_radii_1_plus, 50))
+
+    plt.hist(g_centric_radii, cumulative = True, normed = True, bins = freedman_diaconis_nbins(g_centric_radii))
+    plt.show()
+
+    plt.hist(g_centric_radii, bins = freedman_diaconis_nbins(g_centric_radii))
+
+    plt.show()
+
+    plt.hist(g_centric_radii, log = True, bins = freedman_diaconis_nbins(g_centric_radii))
+
+    plt.show()
+
+    plt.hist(g_centric_radii_1_plus, bins = freedman_diaconis_nbins(g_centric_radii_1_plus))
+
+    plt.show()
+
+    plt.hist(g_centric_radii_1_plus, bins = freedman_diaconis_nbins(g_centric_radii_1_plus), log = True)
+
+    plt.show()
+
+    plt.hist(g_centric_radii_1_to_2, log = True)
+
     plt.show()
