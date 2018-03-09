@@ -190,7 +190,7 @@ def plot_sne_cumulative():
 def calc_sne_rate(n_bins):
     # parses the full sample of supernovae
     gal_dict = {}
-    parse_galaxy_file(gal_dict, 'table2.dat')
+    parse_galaxy_file(gal_dict, 'table2.dat', 'galaxy-full.txt')
 
     num_full_optimal = sum([1 for curr_gal in gal_dict.values() if curr_gal.full_optimal])
     num_not_optimal = sum([1 for curr_gal in gal_dict.values() if not curr_gal.full_optimal])
@@ -275,7 +275,8 @@ def calc_sne_rate(n_bins):
 
 # Plots a step function of the number of supernovae vs stellar mass
 # A line is plotted for the total supernovae and the outskirts supernovae (beyond r25)
-def hist_total_sne_by_stellar_mass(n_bins):
+# param: n_bins - the number of bins (default 10)
+def hist_total_sne_by_stellar_mass(n_bins = 10):
     # parses the full sample of supernovae
     gal_dict = {}
     parse_galaxy_file(gal_dict, 'table2.dat', 'galaxy-full.txt')
