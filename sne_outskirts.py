@@ -580,6 +580,13 @@ def total_rate_dwarfs():
     print('These galaxies host', num_sne, 'supernovae')
     print('Mean galaxy mass:', '%.3e' % (mean_mass * 1e10), 'Msun')
 
+    print('Hubble types:')
+
+    print('\tElliptical:', len([0 for curr_gal in list_galaxies if curr_gal.hubble_type[0] == 'E']), sep = '\t')
+    print('\tSpiral:', len([0 for curr_gal in list_galaxies if curr_gal.hubble_type[0] == 'S']), sep = '\t')
+    print('\tIrregular:', len([0 for curr_gal in list_galaxies if curr_gal.hubble_type[0] == 'I']), sep = '\t')
+
+
     rate_Ia, low_Ia, high_Ia = sn_rate_total(list_galaxies, 'Ia')
     rate_SE, low_SE, high_SE = sn_rate_total(list_galaxies, 'SE')
     rate_II, low_II, high_II = sn_rate_total(list_galaxies, 'II')
@@ -767,7 +774,7 @@ def sne_radial_histogram():
 
     plt.hist(distance_ratios, bins = freedman_diaconis_nbins(distance_ratios))
     plt.title('Number of Supernovae vs Radius (r / R25)')
-    plt.xlabel('Distance Ratio (r / R25')
+    plt.xlabel('Distance Ratio (r / R25)')
     plt.ylabel('Number of SNe')
     plt.show()
 
@@ -819,11 +826,11 @@ def __main__():
 
     #sne_radial_data()
 
-    #sne_radial_histogram()
+    sne_radial_histogram()
 
     #compare_outskirts_to_dwarfs()
 
-    galaxy_mass_histogram(log_scale=True)
+    #galaxy_mass_histogram(log_scale=True)
 
 
 __main__()
