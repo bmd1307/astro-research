@@ -772,6 +772,36 @@ def sne_radial_histogram():
     plt.show()
 
 
+def galaxy_mass_histogram(log_scale = False):
+    # parses the full sample of supernovae
+    gal_dict = {}
+    parse_galaxy_file(gal_dict, 'table2.dat', 'galaxy-full.txt')
+
+    # gets all the galaxies with a non zero mass
+    list_galaxies = [curr_gal for curr_gal in gal_dict.values() if curr_gal.stellar_mass_Lum > 0.0]
+
+    # creates a list of stellar masses, converts
+    galaxy_masses = [curr_gal.stellar_mass_Lum * 10**10 for curr_gal in list_galaxies]
+
+    if log_scale:
+        galaxy_masses = [math.log10(curr_mass) for curr_mass in galaxy_masses]
+
+    n_bins = freedman_diaconis_nbins(galaxy_masses)
+
+    print('Freedman Diaconis bins:', n_bins)
+
+    plt.hist(galaxy_masses, bins=n_bins)
+
+    plt.title('Stellar Mass Function of the Galaxy Sample')
+
+    plt.xlabel('Log10(M*)')
+
+    plt.ylabel('Number of Galaxies')
+
+    plt.yscale('log')
+
+    plt.show()
+
 # call the desired function from this __main__ function
 def __main__():
     print(" *** sne_outskirts.py *** ")
@@ -791,7 +821,9 @@ def __main__():
 
     #sne_radial_histogram()
 
-    compare_outskirts_to_dwarfs()
+    #compare_outskirts_to_dwarfs()
+
+    galaxy_mass_histogram(log_scale=True)
 
 
 __main__()
