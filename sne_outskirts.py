@@ -61,6 +61,18 @@ def sn_count(galaxy_bin, sn_type):
     return total_sne
 
 
+# returns the total number of supernova in a galaxy sample which occur beyond the optical radius
+def count_total_sne_outskirts(galaxy_bin):
+    to_return = 0
+
+    for curr_gal in galaxy_bin:
+        for curr_sn in curr_gal.supernovae:
+            if curr_sn.distance_ratio("read") > 1.0:
+                to_return = to_return + 1
+
+    return to_return
+
+
 # returns the mean of the stellar masses of a list of galaxy objects
 # param: galaxy_bin - a list of Galaxy objects
 def bin_mean_mass(galaxy_bin):
@@ -611,9 +623,9 @@ def total_rate_outskirts_spirals():
     pair_galaxies_and_sne(gal_dict, sne_list)
 
     # limits the list of galaxies to the full_optimal with spirals
-    list_galaxies = [curr_gal for curr_gal in gal_dict.values() if curr_gal.full_optimal and curr_gal.hubble_type[0] == 'S']
+    list_galaxies = [curr_gal for curr_gal in gal_dict.values() if curr_gal.full_optimal and curr_gal.hubble_type[0] == 'S' and curr_gal.stellar_mass_Lum > 0]
 
-    num_sne = sum([len(curr_gal.supernovae) for curr_gal in list_galaxies])
+    num_sne = count_total_sne_outskirts(list_galaxies)
 
     mean_mass = bin_mean_mass(list_galaxies)
 
@@ -777,7 +789,9 @@ def __main__():
 
     #sne_radial_data()
 
-    sne_radial_histogram()
+    #sne_radial_histogram()
+
+    compare_outskirts_to_dwarfs()
 
 
 __main__()
