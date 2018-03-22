@@ -29,7 +29,7 @@
 \author{People (Brennan Dell, Sukanya Chakrabarti, Ben Lewis, Or Graur, Alex Filipenko)}
 
 \begin{abstract}
-Many spiral galaxies have extended outer HI disks, and display low levels of star formation, inferred from the FUV emission detected by GALEX, well beyond the optical radius. Here, we investigate the supernova rate (SN rate) in the outskirts of galaxies, using the largest and most homogeneous set of nearby supernova from the Lick Observatory Supernova Search (LOSS).    Up to now, supernova rates have been measured with respect to various galaxy properties, such as stellar mass and metallicity, but not with respect to galactocentric radius.  Understanding the SN rate as a function of intra-galactic environment has many ramifications -- from the interpretation of LIGO observations, the formation of massive stars, to the observed high velocity dispersion of the outer HI disk.  Using the data from the LOSS survey, we find that supernovae in dwarf galaxies (with a stellar mass less than $10^{9} M_{\odot}$) host 3.962 +/- 2.175 supernovae per millennium, while supernovae beyond the optical radius of spiral galaxies occur at a rate of 2.480 +/- 0.490 supernovae per millennium. The agreement in these figures suggests that the outskirts of spiral galaxies are just as likely to be hosts of binary black hole mergers as dwarf galaxies are. In the future, better measurements of the stellar mass in the outskirts of galaxies as well as larger homogeneous samples of supernova data should refine this measurement, and clarify the relationship between the supernova rate and galactocentric radius.
+Many spiral galaxies have extended outer HI disks, and display low levels of star formation, inferred from the FUV emission detected by GALEX, well beyond the optical radius. Here, we investigate the supernova rate (SN rate) in the outskirts of galaxies, using the largest and most homogeneous set of nearby supernova from the Lick Observatory Supernova Search (LOSS).    Up to now, supernova rates have been measured with respect to various galaxy properties, such as stellar mass and metallicity, but not with respect to galactocentric radius.  Understanding the SN rate as a function of intra-galactic environment has many ramifications -- from the interpretation of LIGO observations, the formation of massive stars, to the observed high velocity dispersion of the outer HI disk.  Using the data from the LOSS survey, we find that supernovae in dwarf galaxies (with a stellar mass less than $10^{9} M_{\odot}$) host 3.962 +/- 2.175 supernovae per millennium, while supernovae beyond the optical radius of spiral galaxies occur at a rate of 2.432 +/- 0.497 supernovae per millennium. The agreement in these figures suggests that the outskirts of spiral galaxies are just as likely to be hosts of binary black hole mergers as dwarf galaxies are. In the future, better measurements of the stellar mass in the outskirts of galaxies as well as larger homogeneous samples of supernova data should refine this measurement, and clarify the relationship between the supernova rate and galactocentric radius.
 \end{abstract}
 
 \section{Introduction}
@@ -44,19 +44,19 @@ This paper is organized as follows.   In \S 2, we briefly review the parameters 
 
 \section{Methods}
 
-The Lick Observatory Supernova Search (LOSS) has produced the largest homogeneous sample currently available of galaxies used for supernova rate calculation. This sample is magnitude limited to ~19 magnitudes, contains 14,878 galaxies, and hosts 929 supernovae. (Leaman et al. 2010). Galaxies in the sample are grouped by hubble type into eight classes —E, S0, Sa, Sb, Sbc, Sc, Scd, and Irr (irregular), and supernovae are classified as type Ia, SE or II. Leaman et al. (2010) provide data from this survey on the position of the supernovae within their host galaxies, as well as parameters describing the apparent shape of the galactic disks. In addition, Graur et al. (2017) provide control times for the LOSS sample galaxies used in supernova rate calculations. Using these two data sets, rates of supernovae can be calculated for specific regions of a galaxy defined by galactocentric radius. We use this approach to determine the supernova rate in the outskirts (r > R25) of spiral galaxies, and analyze the results.
+The Lick Observatory Supernova Search (LOSS) has produced the largest homogeneous sample currently available of galaxies used for supernova rate calculation. This sample is magnitude limited to ~19 magnitudes, contains 14,878 galaxies, and hosts 929 supernovae. (Leaman et al. 2011). Galaxies in the sample are grouped by Hubble type into eight classes provided by the NED: E, S0, Sa, Sb, Sbc, Sc, Scd, and Irr (irregular). The supernovae are classified as type Ia, SE, and II. Type Ia consists of all subtypes of Ia supernovae. Type SE consists of stripped-envelope supernovae, namely Ib, Ib/c and Ic supernovae. Type IIb supernovae, although they show evidence of envelope stripping, are classified by Leaman et al as type II (Graur et al. 2017). Leaman et al. (2011) provide data from this survey on the position of the supernovae within their host galaxies, as well as parameters describing the apparent shape of the galactic disks. In addition, Graur et al. (2017) provide control times for the LOSS sample galaxies used in supernova rate calculations. Using these two data sets, rates of supernovae can be calculated for specific regions of a galaxy defined by galactocentric radius. We use this approach to determine the supernova rate in the outskirts of spiral galaxies, which we define as the region of the galaxy beyond the optical radius ($r > R_{25}$ in the B-band).
 
-The data Leaman et al. (2010) collected from the LOSS sample contains the offset coordinates of each supernova from the center of its host, as well as each galaxy’s position angle, major axis length, and minor axis length. The major and minor axes are measured from the ellipse which fits the boundary of the 25th magnitude in the B-band. Using these parameters, the offset vector can be rotated and scaled to produce the vector as it would appear if the host galaxy were viewed face-on. The result is this vector:
+The data Leaman et al. (2011) collected from the LOSS sample contains the offset coordinates of each supernova from the center of its host, as well as each galaxy's position angle, major axis length, and minor axis length. The major and minor axes are measured from the ellipse which fits the boundary of the 25th magnitude in the B-band. Using these parameters, the offset vector can be rotated and scaled to produce the vector as it would appear if the host galaxy were viewed face-on. The result is this vector:
 
 \begin{equation}
-O''_x=d1/d2[x''cos(PA)-y''sin(PA)]
+O''_x=\frac{d1}{d2}[x''cos(PA)-y''sin(PA)]
 \end{equation}
 
 \begin{equation}
 O''_y=x''sin(PA)+y''cos(PA)
 \end{equation}
 
-Where x’’ is the right ascension offset, y’’ is the declination offset, PA is the position angle, d1 is the major axis length, and d2 is the minor axis length. Dividing the length of this adjusted vector by the semi-major axis length produces the galactocentric radius of the supernova expressed as a multiple of R25.
+Where x'' is the right ascension offset, y'' is the declination offset, PA is the position angle, d1 is the major axis length, and d2 is the minor axis length. Dividing the length of this adjusted vector by the semi-major axis length produces the galactocentric radius of the supernova expressed as a multiple of $R_{25}$.
 
 \begin{equation}
 \frac{R_{SN}}{R_{25}}=\frac{\sqrt{{O''}_x^2 + {O''}_y^2}}{\frac{1}{2} d_1}
@@ -64,13 +64,13 @@ Where x’’ is the right ascension offset, y’’ is the declination offset, 
 
 Although this is a crude method of distance measurement, it is sufficient to determine which supernovae explode beyond the optical radii of galaxies.
 
-The figure below shows the distribution of supernovae vs the galaxy stellar mass:
+The figure below shows the distribution of supernovae vs. the galaxy stellar mass in the sample:
 
 \includegraphics[scale=0.5]{supernova_freq_vs_stellar_mass}
 
-The small number of supernovae in the low mass range is caused by the lack of low mass galaxies in the galaxy sample. As Leaman et al. (2010) mention, this is due to a Malmquist bias in the LOSS sample.
+The small number of supernovae in the low mass range is caused by the lack of low mass galaxies in the galaxy sample. As Leaman et al. (2011) mention, this is due to a Malmquist bias in the LOSS sample.
 
-In addition, Graur et al. (2017) provide the control times and stellar masses for each of the galaxies in the LOSS survey. When this data is combined with the parameters from the data gathered by Leaman et al. (2010), supernova rates can be calculated with respect to galactocentric radius.
+In addition, Graur et al. (2017) provide the control times and stellar masses for each of the galaxies in the LOSS survey. When this data is combined with the parameters from the data gathered by Leaman et al. (2011), supernova rates can be calculated with respect to galactocentric radius.
 
 We calculate supernova rates using the mass-normalized control time method. The specific supernova rate for a sample of galaxies is calculated with this equation.
 
@@ -78,17 +78,19 @@ We calculate supernova rates using the mass-normalized control time method. The 
 Rate_{sample}=\frac{N}{\Sigma t_{ci} \cdot M_{*, i}}
 \end{equation}
 
-Where N is the number of supernovae of a certain type in the sample, tci is the control time of the ith galaxy, and M*i is the stellar mass of the ith galaxy (Graur et al. 2017). Calculating the “specific” supernova rate accounts for the fact that the specific supernova rate increases as a galaxy’s stellar mass decreases (Leaman et al. 2010). If the mass of a galaxy is known along with its specific supernova rate, then the number of supernovae per year can be calculated. We choose to represent the specific supernova rates in SNuM units, where 1 SNuM is 10-12 SN yr-1 solar mass-1 (Graur et al. 2017).
+Where N is the number of supernovae of a certain type in the sample, $t_{ci}$ is the control time of the ith galaxy, and $M_{*,i}$ is the stellar mass of the ith galaxy (Graur et al. 2017). Calculating the “specific” supernova rate accounts for the fact that the specific supernova rate increases as a galaxy's stellar mass decreases (Leaman et al. 2011). If the mass of a galaxy is known along with its specific supernova rate, then the number of supernovae per year can be calculated. We choose to represent the specific supernova rates in SNuM units, where 1 SNuM is $10^{-12}$ SN $yr^{-1} M_{\odot}^{-1}$ (Graur et al. 2017).
 
-The luminosity data used to calculate the stellar masses of the galaxies is not available for all galaxies in the sample. Leaman et al. (2010) avoid this problem by excluding these galaxies from the rate calculations. We use the same approach to calculate our supernova rates. In order to increase the sample size of galaxies for the supernova rate calculation, Graur et al. (2017) extrapolated the galaxy stellar masses using partially available luminosity data. The supernova rates which we defined could be improved using a similar approach.
+The masses of the galaxies are calculated using the B and K magnitudes (Leaman et al. 2011, Graur et al. 2017). These magnitudes are not available for all galaxies in the sample. Leaman et al. (2011) avoid this problem by excluding these galaxies from the rate calculations. We use the same approach to calculate our supernova rates. In order to increase the sample size of galaxies for the supernova rate calculation, Graur et al. (2017) extrapolated the galaxy stellar masses using one of the magnitudes. The supernova rates which we defined could be improved using a similar approach.
 
-The control time for a given galaxy varies depending on the type of supernova that is being observed. We calculate the total supernova rate, or the supernova rate regardless of type, as the sum of the rate of each type of supernova:
+This equation can be adapted to determine the number of supernovae of a certain type which occur in the outskirts of galaxies. We calculate these rates using the same control times and stellar masses, but counting only the supernovae with a galactocentric radius greater than $R_{25}$.
+
+The control time for a given galaxy differs depending on the type of supernova. For this reason, the total supernova rate, or the rate of all supernovae regardless of type, cannot be calculated directly from this equation. We calculate the total rate by adding the rates of each supernova type:
 
 \begin{equation}
 Rate_{Total}=Rate_{Ia}+Rate_{SE}+Rate_{II}
 \end{equation}
 
-Using the data collected by Leaman et al. (2010) and Graur et al. (2017), the supernova rate in the outskirts of spiral galaxies can be calculated using the above equation on a sample of spiral galaxies where N is the number of supernovae occuring beyond R25. Calculating this rate for the outskirts of spiral galaxies can then be compared to the rate of supernovae in dwarf galaxies.
+We proceed to calculate this rate for the outskirts of spiral galaxies, and compare it to the rate of supernovae in dwarf galaxies.
 
 \section{Results}
 
@@ -96,18 +98,18 @@ In the sample of LOSS galaxies, supernovae are found to be distributed like so:
 
 \includegraphics[scale=0.5]{sne_vs_radius}
 
-Leaman et al. (2010) attribute the small number of supernovae near the center of the galaxy to extinction effects from the galactic bulge. Aside from that, the number of supernovae declines as a power law as the galactocentric radius increases. Supernovae can be seen well beyond the optical radius.
+Leaman et al. (2011) attribute the small number of supernovae near the center of the galaxy to extinction effects from the galactic bulge. Aside from that, the number of supernovae declines as a power law as the galactocentric radius increases. Supernovae can be seen well beyond the optical radius.
 
 The dependence of rate vs. mass was measured to compare it with the supernova rates overall. We attempted to replicate the plot of the specific supernova rate vs. mass in the same manner as Graur et al. (2017).
 
-The plot in red below is produced by grouping galaxies by their stellar mass into bins by their stellar mass, then plotting the rate and the errors for each rate. The sliding bin line in blue is plotted by using the same bin size as the fixed bins, but the bin “slides” along the x-axis, and calculates the supernova rate of the galaxies it contains. The gray shaded region shows the Poisson errors for this calculation. A power law was fit to the fixed bins, and is plotted in green.
+The plot in red below is produced by grouping galaxies by their stellar mass into bins by their stellar mass, then plotting the rate and the errors for each rate. The sliding bin line in blue is plotted by using the same bin size as the fixed bins, but the bin “slides” along the x-axis, and calculates the supernova rate of the galaxies it contains. The gray shaded region shows the 68\% Poisson uncertainties for this calculation. A power law was fit to the fixed bins, and is plotted in green.
 
 \includegraphics[scale=0.5]{outskirts_sn_rate_vs_mass}
 
 \begin{center}
   \begin{tabular}{| c | c |}
   \hline
-    Stellar Mass (10\textsuperscript{10}) & SN Rate (SNuM = 10\textsuperscript{-12} yr\textsuperscript{-1} M\textsubscript{$\odot$}\textsuperscript{-1}) \\
+    Stellar Mass ($10^{10} M_{\odot}$) & SN Rate \newline (SNuM = $10^{-12}$ SN $yr^{-1} M_{\odot}^{-1}$) \\
   \hline
     0.104 & 2.062 \\
     0.271 & 2.316e-1 \\
@@ -121,36 +123,35 @@ The plot in red below is produced by grouping galaxies by their stellar mass int
   \end{tabular}
 \end{center}
 
-Fitting a power law to the fixed bins in this plot produces a specific supernova rate function given a galaxy’s stellar mass:
+Fitting a power law to the fixed bins in this plot produces a specific supernova rate function given a galaxy's stellar mass:
 
 \begin{equation}
 Rate_{SN,total}=(9.174 \cdot 10^6) \cdot M_*^{-0.696}
 \end{equation}
 
-Multiplying this specific rate by the galaxy’s stellar mass produces the number of supernovae per year:
+Multiplying this specific rate by the galaxy's stellar mass produces the number of supernovae per year:
 
 \begin{equation}
-Rate_{SN,total}=(9.174 \cdot 10^{-6}) \cdot M_*^{0.304}
+SNe/year=(9.174 \cdot 10^{-6}) \cdot M_*^{0.304}
 \end{equation}
 
-To calculate the supernova rate for the outskirts of spiral galaxies, a sample of spiral galaxies was selected from the sample. The size of the sample of spiral galaxies is 8,348 galaxies, which contain 73 supernovae in the outskirts. The mean mass of the sample is 6.959 * 1010 solar masses. The specific supernova rate for all types of supernovae is 0.035 +/- 0.007 SNuM. The error in this rate is the 68\% Poisson uncertainty. Multiplying this specific rate by the mean mass of this sample produces a supernova rate of 2.432 +/- 0.497 SNe per millenium.
+To calculate the supernova rate for the outskirts of spiral galaxies, we selected all spiral galaxies from the sample with stellar masses. The size of the sample of spiral galaxies is 8,348 galaxies, which contain 73 supernovae in the outskirts. The mean mass of the sample is $6.959 \cdot 10^{10} M_{\odot}$. The specific supernova rate for all types of supernovae is $0.035 \pm 0.007$ SNuM. The error in this rate is the 68\% Poisson uncertainty. Multiplying this specific rate by the mean mass of this sample produces a supernova rate of $2.432 \pm 0.497$ SNe per millenium.
 
-The rate for dwarf galaxies was also calculated. The sample of dwarf galaxies was created by selecting all the galaxies with a stellar mass less than 109 solar masses. This selection contains 432 dwarf galaxies, which contain 11 supernovae. The mean mass of a galaxy sample is 4.476 * 108 solar masses. The specific supernova rate for this sample is 8.851 +/- 4.859 SNuM. Multiplying this specific rate by the mean mass of this sample produces a supernova rate of 3.962 +/- 2.175 SNe per millenium.
+The rate for dwarf galaxies was also calculated. The sample of dwarf galaxies was created by selecting all the galaxies with a stellar mass less than 109 solar masses. This selection contains 432 dwarf galaxies, which contain 11 supernovae. The mean mass of a galaxy sample is $4.476 \cdot 10^{8} M_{\odot}$. The specific supernova rate for this sample is $8.851 \pm 4.859$ SNuM. Multiplying this specific rate by the mean mass of this sample produces a supernova rate of $3.962 \pm 2.175$ SNe per millenium.
 
 \section{Discussion}
 
 Although the data from the outskirts of spiral galaxies and especially from dwarf galaxies is very sparse, the broad agreement in these figures provides empirical evidence for the claim that the outskirts of spiral galaxies are just as likely to be a source of binary black hole mergers.
 
-The scarcity of the dwarf galaxies is due to the fact that the LOSS sample is magnitude limited to ~19 magnitudes (Leaman et al. 2010). Leaman et al. (2010) also mention that irregular galaxies are underrepresented in the galaxy sample, which occur most frequently in low mass galaxies (Kelvin et al. 2014).
+The scarcity of the dwarf galaxies is due to the fact that the LOSS sample is magnitude limited to ~19 magnitudes (Leaman et al. 2011). Leaman et al. (2011) also mention that irregular galaxies are underrepresented in the galaxy sample, which occur most frequently in low mass galaxies (Kelvin et al. 2014).
 
-The direct measurement of the supernova rate beyond the optical radius also provides a direct method of determining the energy input rate of supernova into the extended HI disks of spiral galaxies. Using an estimation of the supernova rate, Tamburro et al. (2009) determine that the supernova feedback efficiency would need to be unrealistically high to account for the observed turbulence in the HI regions in the outskirts of spiral galaxies. This conclusion could be supported directly using the supernova rates which we have derived here.
+The direct measurement of the supernova rate beyond the optical radius also provides a direct method of determining the energy input rate of supernovae into the extended HI disks of spiral galaxies. Previously, Tamburro et al. calculated the energy input rate using an estimation of the supernova rate in the outskirts, which they derived by assuming an IMF to determine the number of stars in the outskirts which terminate as core-collapse supernovae. This new direct measurement of the supernova rate in the outskirts of galaxies provides a more direct method of determining this rate of energy input into HI regions in galactic outskirts, and allows the puzzling turbulence in these regions to be investigated further.
 
 \section{Conclusion}
 
 This broad agreement suggests that the outskirts of spiral galaxies is a region which deserves closer research. Deeper surveys of these galaxies could provide better information on galactic outskirts, such as star formation rate and stellar mass, which would further elucidate the contribution of spiral outskirts to black hole mergers. 
 
 The measurements of the supernova rate in the outskirts could be improved using samples with a larger and more representative number of dwarf galaxies. In particular, a volume-limited sample would allow the total number of observed supernovae from dwarf galaxies and from spiral galaxy outskirts to be calculated, thus providing a more robust tracer of their contributions to the signal from binary black hole collisions.
-
 
 This material is based upon work supported by the National Science Foundation under Grant No. 1517488. Any opinions, findings and conclusions or recommendations expressed in this material are those of the authors and do not necessarily reflect the views of the National Science Foundation.
 
