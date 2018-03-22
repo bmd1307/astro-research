@@ -362,7 +362,7 @@ def hist_total_sne_by_stellar_mass(n_bins = 10):
     plt.legend(["Total SNe", 'Outskirts SNe'])
 
     plt.title('Supernova Frequency vs Galaxy Stellar Mass')
-    plt.xlabel('Stellar Mass (10^10 Msun)')
+    plt.xlabel('Stellar Mass ($10^{10} M_{\odot}$)')
     plt.ylabel('Number of SNe')
     plt.xscale('log')
     plt.show()
@@ -541,8 +541,8 @@ def total_sn_rate_outskirts(n_bins, save_graph = False, verbose = True, show_gra
                 'Sliding bin error (68% Poisson)',\
                 'Fixed Bin'])
     leg.set_zorder(30)
-    plt.xlabel('Stellar Mass (10^10 Msun)')
-    plt.ylabel('SNum (10^-12 Msun^-1 yr^-1')
+    plt.xlabel('Stellar Mass ($10^{10} M_{\odot}$)')
+    plt.ylabel('SNum ($10^{-12} M_{\odot}^{-1} yr^{-1}$)')
     plt.xscale('log')
     plt.yscale('log')
     plt.xlim([10**-2.5, 10**2.5])
@@ -813,7 +813,7 @@ def galaxy_mass_histogram(log_scale = False):
 def __main__():
     print(" *** sne_outskirts.py *** ")
 
-    #hist_total_sne_by_stellar_mass(10)
+    hist_total_sne_by_stellar_mass(10)
 
     #for n in range(2, 25):
     #    print('Saving image for n =', n)
@@ -826,7 +826,7 @@ def __main__():
 
     #sne_radial_data()
 
-    sne_radial_histogram()
+    #sne_radial_histogram()
 
     #compare_outskirts_to_dwarfs()
 
