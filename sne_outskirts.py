@@ -813,14 +813,14 @@ def galaxy_mass_histogram(log_scale = False):
 def __main__():
     print(" *** sne_outskirts.py *** ")
 
-    hist_total_sne_by_stellar_mass(10)
+    #hist_total_sne_by_stellar_mass(10)
 
     #for n in range(2, 25):
     #    print('Saving image for n =', n)
     #    total_sn_rate_outskirts(n, save_graph=True, verbose=False, show_graph=False)
 
     #total_sn_rate_outskirts(10, rate_function=sn_rate_total, title = 'Total Supernova Rate vs Stellar Mass', yrange=[0.01, 300])
-    #total_sn_rate_outskirts(10) # calculates outskirts by default
+    total_sn_rate_outskirts(10) # calculates outskirts by default
 
     #test_outskirts_mass_diaz_garcia()
 
