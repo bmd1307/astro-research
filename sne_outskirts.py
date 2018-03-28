@@ -576,9 +576,15 @@ def total_rate_dwarfs():
 
     mean_mass = bin_mean_mass(list_galaxies)
 
+    lowest_mass = min([curr_gal.stellar_mass_Lum for curr_gal in list_galaxies])
+    highest_mass = max([curr_gal.stellar_mass_Lum for curr_gal in list_galaxies])
+
     print('Found', len(list_galaxies), 'dwarf galaxies (M* < 10^9 Msun)')
     print('These galaxies host', num_sne, 'supernovae')
     print('Mean galaxy mass:', '%.3e' % (mean_mass * 1e10), 'Msun')
+    print('Minimum galaxy mass:', '%.3e' % (lowest_mass * 1e10), 'Msun')
+    print('Maximum galaxy mass:', '%.3e' % (highest_mass * 1e10), 'Msun')
+
 
     print('Hubble types:')
 
@@ -635,10 +641,14 @@ def total_rate_outskirts_spirals():
     num_sne = count_total_sne_outskirts(list_galaxies)
 
     mean_mass = bin_mean_mass(list_galaxies)
+    lowest_mass = min([curr_gal.stellar_mass_Lum for curr_gal in list_galaxies])
+    highest_mass = max([curr_gal.stellar_mass_Lum for curr_gal in list_galaxies])
 
     print('Found', len(list_galaxies), 'spiral galaxies')
     print('These galaxies host', num_sne, 'supernovae')
     print('Mean galaxy mass:', '%.3e' % (mean_mass * 1e10), 'Msun')
+    print('Minimum galaxy mass:', '%.3e' % (lowest_mass * 1e10), 'Msun')
+    print('Maximum galaxy mass:', '%.3e' % (highest_mass * 1e10), 'Msun')
 
     rate_Ia, low_Ia, high_Ia = sn_rate_outskirts(list_galaxies, 'Ia')
     rate_SE, low_SE, high_SE = sn_rate_outskirts(list_galaxies, 'SE')
@@ -772,9 +782,14 @@ def sne_radial_histogram():
 
     distance_ratios = [sn.distance_ratio('read') for sn in sne_list]
 
+    num_in_outskirts = count_total_sne_outskirts(gal_dict.values())
+
+    print("Total SNe beyond R25:", num_in_outskirts)
+    print("Total number of supernovae:", len(distance_ratios))
+
     plt.hist(distance_ratios, bins = freedman_diaconis_nbins(distance_ratios))
-    plt.title('Number of Supernovae vs Radius (r / R25)')
-    plt.xlabel('Distance Ratio (r / R25)')
+    plt.title('Number of Supernovae vs Radius (r / $R_{25}$)')
+    plt.xlabel('Galactocentric Radius (r / $R_{25}$)')
     plt.ylabel('Number of SNe')
     plt.show()
 
@@ -820,13 +835,13 @@ def __main__():
     #    total_sn_rate_outskirts(n, save_graph=True, verbose=False, show_graph=False)
 
     #total_sn_rate_outskirts(10, rate_function=sn_rate_total, title = 'Total Supernova Rate vs Stellar Mass', yrange=[0.01, 300])
-    total_sn_rate_outskirts(10) # calculates outskirts by default
+    #total_sn_rate_outskirts(10) # calculates outskirts by default
 
     #test_outskirts_mass_diaz_garcia()
 
     #sne_radial_data()
 
-    #sne_radial_histogram()
+    sne_radial_histogram()
 
     #compare_outskirts_to_dwarfs()
 
