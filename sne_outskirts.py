@@ -361,7 +361,8 @@ def hist_total_sne_by_stellar_mass(n_bins = 10):
 
     plt.legend(["Total SNe", 'Outskirts SNe'])
 
-    plt.title('Supernova Frequency vs Galaxy Stellar Mass')
+    #don't show the title for figures used in the paper, use captions instead
+    #plt.title('Supernova Frequency vs Galaxy Stellar Mass')
     plt.xlabel('Stellar Mass ($10^{10} M_{\odot}$)')
     plt.ylabel('Number of SNe')
     plt.xscale('log')
@@ -536,7 +537,8 @@ def total_sn_rate_outskirts(n_bins, save_graph = False, verbose = True, show_gra
 
     plt.fill_between(mean_masses, lower_line, upper_line, facecolor = 'gainsboro', zorder = 1)
 
-    plt.title(title + ' (bins = ' + str(n_bins) + ')')
+    #don't show this title, use caption instead in the paper
+    #plt.title(title + ' (bins = ' + str(n_bins) + ')')
     leg = plt.legend(['Linear Fit to Fixed Bins\n(' + fit_func_str + ')', 'Sliding Bin',\
                 'Sliding bin error (68% Poisson)',\
                 'Fixed Bin'])
@@ -788,7 +790,8 @@ def sne_radial_histogram():
     print("Total number of supernovae:", len(distance_ratios))
 
     plt.hist(distance_ratios, bins = freedman_diaconis_nbins(distance_ratios))
-    plt.title('Number of Supernovae vs Radius (r / $R_{25}$)')
+    # don't use title in the figures for the paper, caption instead
+    #plt.title('Number of Supernovae vs Radius (r / $R_{25}$)')
     plt.xlabel('Galactocentric Radius (r / $R_{25}$)')
     plt.ylabel('Number of SNe')
     plt.show()
