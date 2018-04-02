@@ -637,8 +637,17 @@ def total_rate_outskirts_spirals():
 
     pair_galaxies_and_sne(gal_dict, sne_list)
 
-    # limits the list of galaxies to the full_optimal with spirals
-    list_galaxies = [curr_gal for curr_gal in gal_dict.values() if curr_gal.full_optimal and curr_gal.hubble_type[0] == 'S' and curr_gal.stellar_mass_Lum > 0]
+    # limits the list of galaxies to the full_optimal with spirals larger than 10^9 Msun
+    list_galaxies = [curr_gal for curr_gal in gal_dict.values() if curr_gal.full_optimal and curr_gal.hubble_type[0] == 'S' and curr_gal.stellar_mass_Lum > 0.1]
+
+    # gets mass data for the galaxies
+    log_gal_masses = [math.log10(10**10 * curr_gal.stellar_mass_Lum) for curr_gal in list_galaxies]
+
+    plt.hist(log_gal_masses, bins = 20)
+    plt.title("Number of Spiral Galaxies vs Stellar Mass")
+    plt.xlabel("Stellar Mass (log(Msun))")
+    plt.ylabel("Number of Galaxies")
+    plt.show()
 
     num_sne = count_total_sne_outskirts(list_galaxies)
 
@@ -844,9 +853,9 @@ def __main__():
 
     #sne_radial_data()
 
-    sne_radial_histogram()
+    #sne_radial_histogram()
 
-    #compare_outskirts_to_dwarfs()
+    compare_outskirts_to_dwarfs()
 
     #galaxy_mass_histogram(log_scale=True)
 
