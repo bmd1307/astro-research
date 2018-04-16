@@ -980,6 +980,142 @@ def galaxy_mass_histogram(log_scale = False):
 
     plt.show()
 
+
+def sne_type_distribution():
+    # parses the full sample of supernovae
+    gal_dict = {}
+    parse_galaxy_file(gal_dict, 'table2.dat', 'galaxy-full.txt')
+
+    # parses the full sample of supernovae
+    sne_list = []
+    parse_sne_file(sne_list, 'sn-full.txt')
+
+    pair_galaxies_and_sne(gal_dict, sne_list)
+
+    # limits the list of galaxies to the full_optimal
+    list_galaxies = [curr_gal for curr_gal in gal_dict.values()]
+
+    num_Ia = 0
+    num_Ia_outskirts = 0
+    for g in list_galaxies:
+        for sn in g.supernovae:
+            if sn.sn_type_class() == 'Ia':
+                num_Ia = num_Ia + 1
+                if sn.distance_ratio("read") >= 1.0:
+                    num_Ia_outskirts = num_Ia_outskirts + 1
+
+    num_SE = 0
+    num_SE_outskirts = 0
+    for g in list_galaxies:
+        for sn in g.supernovae:
+            if sn.sn_type_class() == 'Ib' or sn.sn_type_class() == 'Ic' or sn.sn_type_class() == 'Ibc':
+                num_SE = num_SE + 1
+                if sn.distance_ratio("read") >= 1.0:
+                    num_SE_outskirts = num_SE_outskirts + 1
+
+    num_II = 0
+    num_II_outskirts = 0
+    for g in list_galaxies:
+        for sn in g.supernovae:
+            if sn.sn_type_class() == 'II':
+                num_II = num_II + 1
+                if sn.distance_ratio("read") >= 1.0:
+                    num_II_outskirts = num_II_outskirts + 1
+
+    total_sne = num_Ia + num_SE + num_II
+    total_sne_outskirts = num_Ia_outskirts + num_SE_outskirts + num_II_outskirts
+
+    print("Total numbers of supernovae:", total_sne)
+    print("Number SNe Ia: ", num_Ia, "(", "%1.3f" % (100 * num_Ia / total_sne),"%)")
+    print("\t68% Confidence interval:", scipy.stats.poisson.interval(0.68, num_Ia))
+    print("Number SNe SE: ", num_SE, "(", "%1.3f" % (100 * num_SE / total_sne),"%)")
+    print("\t68% Confidence interval:", scipy.stats.poisson.interval(0.68, num_SE))
+    print("Number SNe II: ", num_II, "(", "%1.3f" % (100 * num_II / total_sne),"%)")
+    print("\t68% Confidence interval:", scipy.stats.poisson.interval(0.68, num_II))
+    print("CC SNe / SNe Ia: ", num_SE + num_II, "/", num_Ia, "=", "%1.3f" % ((num_SE + num_II) / num_Ia))
+    print()
+
+    print("Total numbers of supernovae in the outskirts:", total_sne_outskirts)
+    print("Number SNe Ia: ", num_Ia_outskirts, "(", "%1.3f" % (100 * num_Ia_outskirts / total_sne_outskirts),"%)")
+    print("\t68% Confidence interval:", scipy.stats.poisson.interval(0.68, num_Ia_outskirts))
+    print("Number SNe SE: ", num_SE_outskirts, "(", "%1.3f" % (100 * num_SE_outskirts / total_sne_outskirts),"%)")
+    print("\t68% Confidence interval:", scipy.stats.poisson.interval(0.68, num_SE_outskirts))
+    print("Number SNe II: ", num_II_outskirts, "(", "%1.3f" % (100 * num_II_outskirts / total_sne_outskirts),"%)")
+    print("\t68% Confidence interval:", scipy.stats.poisson.interval(0.68, num_II_outskirts))
+    print("CC SNe / SNe Ia: ", num_SE_outskirts + num_II_outskirts, "/", num_Ia_outskirts, "=", \
+                    "%1.3f" % ((num_SE_outskirts + num_II_outskirts) / num_Ia_outskirts))
+    print()
+
+    spirals = [curr_gal for curr_gal in list_galaxies if\
+               curr_gal.hubble_type[0] == 'S' and curr_gal.stellar_mass_Lum > 0.1]
+
+    spiral_outskirt_Ias = 0
+    for g in spirals:
+        for sn in g.supernovae:
+            if sn.sn_type_class() == 'Ia':
+                if sn.distance_ratio("read") >= 1.0:
+                    spiral_outskirt_Ias = spiral_outskirt_Ias + 1
+
+    spiral_outskirt_SEs = 0
+    for g in spirals:
+        for sn in g.supernovae:
+            if sn.sn_type_class() == 'Ib' or sn.sn_type_class() == 'Ic' or sn.sn_type_class() == 'Ibc':
+                if sn.distance_ratio("read") >= 1.0:
+                    spiral_outskirt_SEs = spiral_outskirt_SEs + 1
+
+    spiral_outskirt_IIs = 0
+    for g in spirals:
+        for sn in g.supernovae:
+            if sn.sn_type_class() == 'II':
+                if sn.distance_ratio("read") >= 1.0:
+                    spiral_outskirt_IIs = spiral_outskirt_IIs + 1
+
+    total_spiral_outskirts = spiral_outskirt_Ias + spiral_outskirt_SEs + spiral_outskirt_IIs
+
+    print("Total numbers of supernovae in the outskirts of spirals:", total_spiral_outskirts)
+    print("Number SNe Ia: ", spiral_outskirt_Ias, "(", "%1.3f" % (100 * spiral_outskirt_Ias / total_spiral_outskirts), "%)")
+    print("\t68% Confidence interval:", scipy.stats.poisson.interval(0.68, spiral_outskirt_Ias))
+    print("Number SNe SE: ", spiral_outskirt_SEs, "(", "%1.3f" % (100 * spiral_outskirt_SEs / total_spiral_outskirts), "%)")
+    print("\t68% Confidence interval:", scipy.stats.poisson.interval(0.68, spiral_outskirt_SEs))
+    print("Number SNe II: ", spiral_outskirt_IIs, "(", "%1.3f" % (100 * spiral_outskirt_IIs / total_spiral_outskirts), "%)")
+    print("\t68% Confidence interval:", scipy.stats.poisson.interval(0.68, spiral_outskirt_IIs))
+    print("CC SNe / SNe Ia: ", spiral_outskirt_SEs + spiral_outskirt_IIs, "/", spiral_outskirt_Ias, "=", \
+          "%1.3f" % ((spiral_outskirt_SEs + spiral_outskirt_IIs) / spiral_outskirt_Ias))
+    print()
+
+    dwarfs = [curr_gal for curr_gal in list_galaxies if 0.0 < curr_gal.stellar_mass_Lum < 0.1]
+
+    dwarfs_Ias = 0
+    for g in dwarfs:
+        for sn in g.supernovae:
+            if sn.sn_type_class() == 'Ia':
+                dwarfs_Ias = dwarfs_Ias + 1
+
+    dwarfs_SEs = 0
+    for g in dwarfs:
+        for sn in g.supernovae:
+            if sn.sn_type_class() == 'Ib' or sn.sn_type_class() == 'Ic' or sn.sn_type_class() == 'Ibc':
+                dwarfs_SEs = dwarfs_SEs + 1
+
+    dwarfs_IIs = 0
+    for g in dwarfs:
+        for sn in g.supernovae:
+            if sn.sn_type_class() == 'II':
+                dwarfs_IIs = dwarfs_IIs + 1
+
+    dwarfs_total = dwarfs_Ias + dwarfs_SEs + dwarfs_IIs
+
+    print("Total supernovae in dwarf galaxies:", dwarfs_total)
+    print("Number SNe Ia: ", dwarfs_Ias, "(", "%1.3f" % (100 * dwarfs_Ias / dwarfs_total), "%)")
+    print("\t68% Confidence interval:", scipy.stats.poisson.interval(0.68, dwarfs_Ias))
+    print("Number SNe SE: ", dwarfs_SEs, "(", "%1.3f" % (100 * dwarfs_SEs / dwarfs_total), "%)")
+    print("\t68% Confidence interval:", scipy.stats.poisson.interval(0.68, dwarfs_SEs))
+    print("Number SNe II: ", dwarfs_IIs, "(", "%1.3f" % (100 * dwarfs_IIs / dwarfs_total), "%)")
+    print("\t68% Confidence interval:", scipy.stats.poisson.interval(0.68, dwarfs_IIs))
+    print("CC SNe / SNe Ia: ", dwarfs_SEs + dwarfs_IIs, "/", dwarfs_Ias, "=", \
+                    "%1.3f" % ((dwarfs_SEs + dwarfs_IIs) / dwarfs_Ias))
+    print()
+
 # call the desired function from this __main__ function
 def __main__():
     print(" *** sne_outskirts.py *** ")
@@ -999,9 +1135,11 @@ def __main__():
 
     #sne_radial_histogram()
 
-    compare_outskirts_to_dwarfs_all_types()
+    #compare_outskirts_to_dwarfs_all_types()
 
     #galaxy_mass_histogram(log_scale=True)
+
+    sne_type_distribution()
 
 
 __main__()
