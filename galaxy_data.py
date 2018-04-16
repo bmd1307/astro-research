@@ -167,6 +167,10 @@ class Galaxy:
                     toReturn = toReturn + 1
             return toReturn
 
+    # returns the average of the control times for total supernova rate calculation
+    def mean_control_time(self):
+        return (self.tc_Ia + self.tc_SE + self.tc_II) / 3.0
+
 def parse_galaxy_file(gal_dict, main_file_name, axes_file_name):
     print('Parsing file ' + main_file_name)
 

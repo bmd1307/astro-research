@@ -690,6 +690,134 @@ def total_rate_outskirts_spirals():
           'SNe / (1000 yr) ')
 
 
+# calculates the supernova rate in the dwarf galaxies in the galaxy sample
+# prints the details of the calculation
+def total_rate_dwarfs_all_types():
+    # parses the full sample of supernovae
+    gal_dict = {}
+    parse_galaxy_file(gal_dict, 'table2.dat', 'galaxy-full.txt')
+
+    # parses the full sample of supernovae
+    sne_list = []
+    parse_sne_file(sne_list, 'sn-full.txt')
+
+    pair_galaxies_and_sne(gal_dict, sne_list)
+
+    # limits the list of galaxies to the full_optimal
+    list_galaxies = [curr_gal for curr_gal in gal_dict.values() if curr_gal.full_optimal and 0.0 < curr_gal.stellar_mass_Lum < 0.1]
+
+    num_sne = sum([len(curr_gal.supernovae) for curr_gal in list_galaxies])
+
+    mean_mass = bin_mean_mass(list_galaxies)
+
+    lowest_mass = min([curr_gal.stellar_mass_Lum for curr_gal in list_galaxies])
+    highest_mass = max([curr_gal.stellar_mass_Lum for curr_gal in list_galaxies])
+
+    print('Found', len(list_galaxies), 'dwarf galaxies (M* < 10^9 Msun)')
+    print('These galaxies host', num_sne, 'supernovae')
+    print('Mean galaxy mass:', '%.3e' % (mean_mass * 1e10), 'Msun')
+    print('Minimum galaxy mass:', '%.3e' % (lowest_mass * 1e10), 'Msun')
+    print('Maximum galaxy mass:', '%.3e' % (highest_mass * 1e10), 'Msun')
+
+
+    print('Hubble types:')
+
+    print('\tElliptical:', len([0 for curr_gal in list_galaxies if curr_gal.hubble_type[0] == 'E']), sep = '\t')
+    print('\tSpiral:', len([0 for curr_gal in list_galaxies if curr_gal.hubble_type[0] == 'S']), sep = '\t')
+    print('\tIrregular:', len([0 for curr_gal in list_galaxies if curr_gal.hubble_type[0] == 'I']), sep = '\t')
+
+
+    rate_Ia, low_Ia, high_Ia = sn_rate_total(list_galaxies, 'Ia')
+    rate_SE, low_SE, high_SE = sn_rate_total(list_galaxies, 'SE')
+    rate_II, low_II, high_II = sn_rate_total(list_galaxies, 'II')
+
+    print('Type Ia rate:', '%1.3f' % (rate_Ia * 1e12), '(-' '%1.3f' % (low_Ia * 1e12), ', +' + \
+          '%1.3f' % (high_Ia * 1e12), ')', '* 10^-12 SNe yr^-1 Msun^-1')
+    print('Type SE rate:', '%1.3f' % (rate_SE * 1e12), '(-' '%1.3f' % (low_SE * 1e12), ', +' + \
+          '%1.3f' % (high_SE * 1e12), ')', '* 10^-12 SNe yr^-1 Msun^-1')
+    print('Type II rate:', '%1.3f' % (rate_II * 1e12), '(-' '%1.3f' % (low_II * 1e12), ', +' + \
+          '%1.3f' % (high_II * 1e12), ')', '* 10^-12 SNe yr^-1 Msun^-1')
+    print()
+
+    total_rate, total_low, total_high = sn_rate_total_all_types(list_galaxies)
+
+    print('Total rate:', '%1.3f' % (total_rate * 1e12), '(-' '%1.3f' % (total_low * 1e12), ', +' + \
+          '%1.3f' % (total_high * 1e12), ')', '* 10^-12 SNe yr^-1 Msun^-1')
+
+    # calculates the number of SNe per millenium
+    sne_per_mill = total_rate * mean_mass * 1e10 * 1e3
+    sne_per_mill_low = total_low * mean_mass * 1e10 * 1e3
+    sne_per_mill_high = total_high * mean_mass * 1e10 * 1e3
+
+    print('SNe / millenium (rate * avg mass):', \
+          '%1.3f' % sne_per_mill, '(-', '%1.3f' % sne_per_mill_low, ',+', '%1.3f' % sne_per_mill_high, ')',
+          'SNe / (1000 yr) ')
+
+
+# calculates the supernova rate in the outskirts of the spiral galaxies in the galaxy sample
+# prints the details of the calculation
+def total_rate_outskirts_spirals_all_types():
+    # parses the full sample of supernovae
+    gal_dict = {}
+    parse_galaxy_file(gal_dict, 'table2.dat', 'galaxy-full.txt')
+
+    # parses the full sample of supernovae
+    sne_list = []
+    parse_sne_file(sne_list, 'sn-full.txt')
+
+    pair_galaxies_and_sne(gal_dict, sne_list)
+
+    # limits the list of galaxies to the full_optimal with spirals larger than 10^9 Msun
+    list_galaxies = [curr_gal for curr_gal in gal_dict.values() if curr_gal.full_optimal and curr_gal.hubble_type[0] == 'S' and curr_gal.stellar_mass_Lum > 0.1]
+
+    # gets mass data for the galaxies
+    log_gal_masses = [math.log10(10**10 * curr_gal.stellar_mass_Lum) for curr_gal in list_galaxies]
+
+    plt.hist(log_gal_masses, bins = 20)
+    plt.title("Number of Spiral Galaxies vs Stellar Mass")
+    plt.xlabel("Stellar Mass (log(Msun))")
+    plt.ylabel("Number of Galaxies")
+    plt.show()
+
+    num_sne = count_total_sne_outskirts(list_galaxies)
+
+    mean_mass = bin_mean_mass(list_galaxies)
+    lowest_mass = min([curr_gal.stellar_mass_Lum for curr_gal in list_galaxies])
+    highest_mass = max([curr_gal.stellar_mass_Lum for curr_gal in list_galaxies])
+
+    print('Found', len(list_galaxies), 'spiral galaxies')
+    print('These galaxies host', num_sne, 'supernovae')
+    print('Mean galaxy mass:', '%.3e' % (mean_mass * 1e10), 'Msun')
+    print('Minimum galaxy mass:', '%.3e' % (lowest_mass * 1e10), 'Msun')
+    print('Maximum galaxy mass:', '%.3e' % (highest_mass * 1e10), 'Msun')
+
+    rate_Ia, low_Ia, high_Ia = sn_rate_outskirts(list_galaxies, 'Ia')
+    rate_SE, low_SE, high_SE = sn_rate_outskirts(list_galaxies, 'SE')
+    rate_II, low_II, high_II = sn_rate_outskirts(list_galaxies, 'II')
+
+    print('Type Ia rate:', '%1.3f' % (rate_Ia * 1e12), '(-' '%1.3f' % (low_Ia * 1e12), ', +' + \
+          '%1.3f' % (high_Ia * 1e12), ')', '* 10^-12 SNe yr^-1 Msun^-1')
+    print('Type SE rate:', '%1.3f' % (rate_SE * 1e12), '(-' '%1.3f' % (low_SE * 1e12), ', +' + \
+          '%1.3f' % (high_SE * 1e12), ')', '* 10^-12 SNe yr^-1 Msun^-1')
+    print('Type II rate:', '%1.3f' % (rate_II * 1e12), '(-' '%1.3f' % (low_II * 1e12), ', +' + \
+          '%1.3f' % (high_II * 1e12), ')', '* 10^-12 SNe yr^-1 Msun^-1')
+    print()
+
+    total_rate, total_low, total_high = sn_rate_outskirts_all_types(list_galaxies)
+
+    print('Total rate:', '%1.3f' % (total_rate * 1e12), '(-' '%1.3f' % (total_low * 1e12), ', +' + \
+          '%1.3f' % (total_high * 1e12), ')', '* 10^-12 SNe yr^-1 Msun^-1')
+
+    # calculates the number of SNe per millenium
+    sne_per_mill = total_rate * mean_mass * 1e10 * 1e3
+    sne_per_mill_low = total_low * mean_mass * 1e10 * 1e3
+    sne_per_mill_high = total_high * mean_mass * 1e10 * 1e3
+
+    print('SNe / millenium (rate * avg mass):', \
+          '%1.3f' % sne_per_mill, '(-', '%1.3f' % sne_per_mill_low, ',+', '%1.3f' % sne_per_mill_high, ')',
+          'SNe / (1000 yr) ')
+
+
 # runs total_rate_dwarfs and total_rate_outskirts_spirals
 def compare_outskirts_to_dwarfs():
     print('*' * 80)
@@ -705,6 +833,22 @@ def compare_outskirts_to_dwarfs():
     print('*' * 80)
 
     total_rate_outskirts_spirals()
+
+# runs total_rate_dwarfs_all_types and total_rate_outskirts_spirals_all_types
+def compare_outskirts_to_dwarfs_all_types():
+    print('*' * 80)
+    print('Calculating the total supernova rate in dwarf galaxies')
+    print('*' * 80)
+    print()
+
+    total_rate_dwarfs_all_types()
+
+    print()
+    print('*' * 80)
+    print('Calculating the outskirts supernova rate in spiral galaxies')
+    print('*' * 80)
+
+    total_rate_outskirts_spirals_all_types()
 
 
 # finds the radial dependence of supernovae. Groups the supernovae into an ideal number of bins by radius, and fits a
@@ -855,7 +999,7 @@ def __main__():
 
     #sne_radial_histogram()
 
-    compare_outskirts_to_dwarfs()
+    compare_outskirts_to_dwarfs_all_types()
 
     #galaxy_mass_histogram(log_scale=True)
 
