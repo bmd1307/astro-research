@@ -1141,7 +1141,7 @@ def spiral_sne_vs_radius(type, ring_width):
                 radii.append(curr_sn.distance_ratio("read"))
 
     print('Found', len(radii), 'supernovae of type', type, 'in spiral galaxies.')
-    # print(sorted(radii))
+    print(sorted(radii))
 
     bins = [n * ring_width for n in range(0, math.ceil(max(radii) / ring_width) + 1)]
     hist, bin_edges = np.histogram(radii, bins = bins)
@@ -1151,6 +1151,8 @@ def spiral_sne_vs_radius(type, ring_width):
     print('bin low', 'high', 'number of SNe', sep='\t\t')
     for i in range(0, len(hist)):
         print('%1.3f' % bin_edges[i], '%1.3f' % bin_edges[i + 1], hist[i], sep='\t\t')
+
+    return radii
 
 def dwarf_sne_vs_radius(type, ring_width):
     conv_type = lambda t: 'SE' if t == 'Ib' or t == 'Ibc' or t == 'Ic' else t
@@ -1176,7 +1178,7 @@ def dwarf_sne_vs_radius(type, ring_width):
                 radii.append(curr_sn.distance_ratio("read"))
 
     print('Found', len(radii), 'supernovae of type', type, 'in dwarf galaxies.')
-    # print(sorted(radii))
+    print(sorted(radii))
 
     bins = [n * ring_width for n in range(0, math.ceil(max(radii) / ring_width) + 1)]
     hist, bin_edges = np.histogram(radii, bins = bins)
@@ -1187,14 +1189,35 @@ def dwarf_sne_vs_radius(type, ring_width):
     for i in range(0, len(hist)):
         print('%1.3f' % bin_edges[i], '%1.3f' % bin_edges[i + 1], hist[i], sep='\t\t')
 
+    return radii
+
+# used as the cdf of the number of supernovae as a function of radius
+# takes a list of the radii of a set of supernovae, and returns the number of those distances which are less than n,
+# i.e. the cdf of the supernova radii
+def sn_count_cdf(arr, n):
+    return list(map(lambda x: x < n, arr)).count(True)
+
 # call the desired function from this __main__ function
 def __main__():
-    spiral_sne_vs_radius('Ia', 0.1)
-    spiral_sne_vs_radius('SE', 0.1)
-    spiral_sne_vs_radius('II', 0.1)
-    dwarf_sne_vs_radius('Ia', 0.1)
-    dwarf_sne_vs_radius('SE', 0.1)
-    dwarf_sne_vs_radius('II', 0.1)
+    spiral_Ia = spiral_sne_vs_radius('Ia', 0.1)
+    spiral_SE = spiral_sne_vs_radius('SE', 0.1)
+    spiral_II = spiral_sne_vs_radius('II', 0.1)
+    dwarf_Ia = dwarf_sne_vs_radius('Ia', 0.1)
+    dwarf_SE = dwarf_sne_vs_radius('SE', 0.1)
+    dwarf_II = dwarf_sne_vs_radius('II', 0.1)
+
+    print(scipy.stats.ks_2samp(spiral_Ia, dwarf_Ia))
+    print(scipy.stats.ks_2samp(spiral_SE, dwarf_SE))
+    print(scipy.stats.ks_2samp(spiral_II, dwarf_II))
+
+    print(scipy.stats.anderson_ksamp([spiral_Ia, dwarf_Ia]))
+    print(scipy.stats.anderson_ksamp([spiral_SE, dwarf_SE]))
+    print(scipy.stats.anderson_ksamp([spiral_II, dwarf_II]))
+
+    # Example usage of the CDF
+    curr_rad = 1.0
+    print('CDF for Spiral Ias at r / r25 =', curr_rad, ':', sn_count_cdf(spiral_Ia, curr_rad))
+
 
     #sne_radial_histogram()
 
