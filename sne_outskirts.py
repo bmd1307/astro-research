@@ -942,6 +942,7 @@ def sne_radial_histogram():
     print("Total SNe beyond R25:", num_in_outskirts)
     print("Total number of supernovae:", len(distance_ratios))
 
+    print('Number of bins:', freedman_diaconis_nbins(distance_ratios))
     plt.hist(distance_ratios, bins = freedman_diaconis_nbins(distance_ratios))
     # don't use title in the figures for the paper, caption instead
     #plt.title('Number of Supernovae vs Radius (r / $R_{25}$)')
@@ -1116,30 +1117,86 @@ def sne_type_distribution():
                     "%1.3f" % ((dwarfs_SEs + dwarfs_IIs) / dwarfs_Ias))
     print()
 
+def spiral_sne_vs_radius(type, ring_width):
+    conv_type = lambda t: 'SE' if t == 'Ib' or t == 'Ibc' or t == 'Ic' else t
+
+    # parses the full sample of supernovae
+    gal_dict = {}
+    parse_galaxy_file(gal_dict, 'table2.dat', 'galaxy-full.txt')
+
+    # parses the full sample of supernovae (contains those of '?' type)
+    sne_list = []
+    parse_sne_file(sne_list, 'sn-full.txt')
+
+    pair_galaxies_and_sne(gal_dict, sne_list)
+
+    # limits the list of galaxies to the full_optimal with spirals larger than 10^9 Msun
+    list_galaxies = [curr_gal for curr_gal in gal_dict.values() if curr_gal.hubble_type[0] == 'S' and curr_gal.stellar_mass_Lum > 0.1]
+
+    radii = []
+
+    for curr_gal in list_galaxies:
+        for curr_sn in curr_gal.supernovae:
+            if conv_type(curr_sn.sn_type_class()) == type:
+                radii.append(curr_sn.distance_ratio("read"))
+
+    print('Found', len(radii), 'supernovae of type', type, 'in spiral galaxies.')
+    # print(sorted(radii))
+
+    bins = [n * ring_width for n in range(0, math.ceil(max(radii) / ring_width) + 1)]
+    hist, bin_edges = np.histogram(radii, bins = bins)
+    # print('hist:', hist)
+    # print('bin-edges:', bin_edges)
+
+    print('bin low', 'high', 'number of SNe', sep='\t\t')
+    for i in range(0, len(hist)):
+        print('%1.3f' % bin_edges[i], '%1.3f' % bin_edges[i + 1], hist[i], sep='\t\t')
+
+def dwarf_sne_vs_radius(type, ring_width):
+    conv_type = lambda t: 'SE' if t == 'Ib' or t == 'Ibc' or t == 'Ic' else t
+
+    # parses the full sample of supernovae
+    gal_dict = {}
+    parse_galaxy_file(gal_dict, 'table2.dat', 'galaxy-full.txt')
+
+    # parses the full sample of supernovae (contains those of '?' type)
+    sne_list = []
+    parse_sne_file(sne_list, 'sn-full.txt')
+
+    pair_galaxies_and_sne(gal_dict, sne_list)
+
+    # limits the list of galaxies to dwarf galaxies (M* < 10^9 Msun)
+    list_galaxies = [curr_gal for curr_gal in gal_dict.values() if 0.0 < curr_gal.stellar_mass_Lum <= 0.1]
+
+    radii = []
+
+    for curr_gal in list_galaxies:
+        for curr_sn in curr_gal.supernovae:
+            if conv_type(curr_sn.sn_type_class()) == type:
+                radii.append(curr_sn.distance_ratio("read"))
+
+    print('Found', len(radii), 'supernovae of type', type, 'in dwarf galaxies.')
+    # print(sorted(radii))
+
+    bins = [n * ring_width for n in range(0, math.ceil(max(radii) / ring_width) + 1)]
+    hist, bin_edges = np.histogram(radii, bins = bins)
+    # print('hist:', hist)
+    # print('bin-edges:', bin_edges)
+
+    print('bin low', 'high', 'number of SNe', sep='\t\t')
+    for i in range(0, len(hist)):
+        print('%1.3f' % bin_edges[i], '%1.3f' % bin_edges[i + 1], hist[i], sep='\t\t')
+
 # call the desired function from this __main__ function
 def __main__():
-    print(" *** sne_outskirts.py *** ")
-
-    #hist_total_sne_by_stellar_mass(10)
-
-    #for n in range(2, 25):
-    #    print('Saving image for n =', n)
-    #    total_sn_rate_outskirts(n, save_graph=True, verbose=False, show_graph=False)
-
-    #total_sn_rate_outskirts(10, rate_function=sn_rate_total, title = 'Total Supernova Rate vs Stellar Mass', yrange=[0.01, 300])
-    #total_sn_rate_outskirts(10) # calculates outskirts by default
-
-    #test_outskirts_mass_diaz_garcia()
-
-    #sne_radial_data()
+    spiral_sne_vs_radius('Ia', 0.1)
+    spiral_sne_vs_radius('SE', 0.1)
+    spiral_sne_vs_radius('II', 0.1)
+    dwarf_sne_vs_radius('Ia', 0.1)
+    dwarf_sne_vs_radius('SE', 0.1)
+    dwarf_sne_vs_radius('II', 0.1)
 
     #sne_radial_histogram()
-
-    #compare_outskirts_to_dwarfs_all_types()
-
-    #galaxy_mass_histogram(log_scale=True)
-
-    sne_type_distribution()
 
 
 __main__()
