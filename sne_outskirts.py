@@ -1195,7 +1195,7 @@ def dwarf_sne_vs_radius(type, ring_width):
 # takes a list of the radii of a set of supernovae, and returns the number of those distances which are less than n,
 # i.e. the cdf of the supernova radii
 def sn_count_cdf(arr, n):
-    return list(map(lambda x: x < n, arr)).count(True)
+    return list(map(lambda x: x < n, arr)).count(True) / len(arr)
 
 # call the desired function from this __main__ function
 def __main__():
@@ -1218,6 +1218,14 @@ def __main__():
     curr_rad = 1.0
     print('CDF for Spiral Ias at r / r25 =', curr_rad, ':', sn_count_cdf(spiral_Ia, curr_rad))
 
+    # Here's how to calculate the CDF for CC SNe:
+    # append the list of SNe II radii to the list of SE SNe to produce the list of CC SNe
+    # CC SNe = SE SNe + SNe II
+    spiral_CC = spiral_SE + spiral_II
+    dwarf_CC = dwarf_SE + dwarf_II
+
+    print('CDF for Spiral CCs at r / r25 =', curr_rad, ':', sn_count_cdf(spiral_CC, curr_rad))
+    print('CDF for Dwarf CCs at r / r25 =', curr_rad, ':', sn_count_cdf(dwarf_CC, curr_rad))
 
     #sne_radial_histogram()
 
