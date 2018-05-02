@@ -472,7 +472,7 @@ def total_sn_rate_outskirts(n_bins, save_graph = False, verbose = True, show_gra
     fit_ys = [rate(x) for x in fit_xs]
     plt.plot(fit_xs, fit_ys, color = 'lime', zorder = 20)
 
-    fit_func_str = ('%1.3f' % fit_coefficient) + ' * M* ^ ' + ('%1.3f' % fit_exponent)
+    fit_func_str = ('$' + '%1.3f' % fit_coefficient) + ' \cdot M_*^{' + ('%1.3f' % fit_exponent + '}$')
 
     print('Fit Function (10^10 Msun -> SNuM):', fit_func_str)
 
@@ -756,7 +756,7 @@ def total_rate_dwarfs_all_types():
 
 # calculates the supernova rate in the outskirts of the spiral galaxies in the galaxy sample
 # prints the details of the calculation
-def total_rate_outskirts_spirals_all_types():
+def total_rate_outskirts_spirals_all_types(use_mass_cut = True):
     # parses the full sample of supernovae
     gal_dict = {}
     parse_galaxy_file(gal_dict, 'table2.dat', 'galaxy-full.txt')
@@ -768,7 +768,12 @@ def total_rate_outskirts_spirals_all_types():
     pair_galaxies_and_sne(gal_dict, sne_list)
 
     # limits the list of galaxies to the full_optimal with spirals larger than 10^9 Msun
-    list_galaxies = [curr_gal for curr_gal in gal_dict.values() if curr_gal.full_optimal and curr_gal.hubble_type[0] == 'S' and curr_gal.stellar_mass_Lum > 0.1]
+    if use_mass_cut:
+        list_galaxies = [curr_gal for curr_gal in gal_dict.values() if \
+                         curr_gal.full_optimal and curr_gal.hubble_type[0] == 'S' and curr_gal.stellar_mass_Lum > 0.1]
+    else:
+        list_galaxies = [curr_gal for curr_gal in gal_dict.values() if \
+                         curr_gal.full_optimal and curr_gal.hubble_type[0] == 'S' and curr_gal.stellar_mass_Lum > 0.0]
 
     # gets mass data for the galaxies
     log_gal_masses = [math.log10(10**10 * curr_gal.stellar_mass_Lum) for curr_gal in list_galaxies]
@@ -998,30 +1003,39 @@ def sne_type_distribution():
 
     num_Ia = 0
     num_Ia_outskirts = 0
+    num_Ia_inside = 0
     for g in list_galaxies:
         for sn in g.supernovae:
             if sn.sn_type_class() == 'Ia':
                 num_Ia = num_Ia + 1
                 if sn.distance_ratio("read") >= 1.0:
                     num_Ia_outskirts = num_Ia_outskirts + 1
+                else:
+                    num_Ia_inside = num_Ia_inside + 1
 
     num_SE = 0
     num_SE_outskirts = 0
+    num_SE_inside = 0
     for g in list_galaxies:
         for sn in g.supernovae:
             if sn.sn_type_class() == 'Ib' or sn.sn_type_class() == 'Ic' or sn.sn_type_class() == 'Ibc':
                 num_SE = num_SE + 1
                 if sn.distance_ratio("read") >= 1.0:
                     num_SE_outskirts = num_SE_outskirts + 1
+                else:
+                    num_SE_inside = num_SE_inside + 1
 
     num_II = 0
     num_II_outskirts = 0
+    num_II_inside = 0
     for g in list_galaxies:
         for sn in g.supernovae:
             if sn.sn_type_class() == 'II':
                 num_II = num_II + 1
                 if sn.distance_ratio("read") >= 1.0:
                     num_II_outskirts = num_II_outskirts + 1
+                else:
+                    num_II_inside = num_II_inside + 1
 
     total_sne = num_Ia + num_SE + num_II
     total_sne_outskirts = num_Ia_outskirts + num_SE_outskirts + num_II_outskirts
@@ -1051,27 +1065,37 @@ def sne_type_distribution():
                curr_gal.hubble_type[0] == 'S' and curr_gal.stellar_mass_Lum > 0.1]
 
     spiral_outskirt_Ias = 0
+    spiral_inside_Ias = 0
     for g in spirals:
         for sn in g.supernovae:
             if sn.sn_type_class() == 'Ia':
                 if sn.distance_ratio("read") >= 1.0:
                     spiral_outskirt_Ias = spiral_outskirt_Ias + 1
+                else:
+                    spiral_inside_Ias = spiral_inside_Ias + 1
 
     spiral_outskirt_SEs = 0
+    spiral_inside_SEs = 0
     for g in spirals:
         for sn in g.supernovae:
             if sn.sn_type_class() == 'Ib' or sn.sn_type_class() == 'Ic' or sn.sn_type_class() == 'Ibc':
                 if sn.distance_ratio("read") >= 1.0:
                     spiral_outskirt_SEs = spiral_outskirt_SEs + 1
+                else:
+                    spiral_inside_SEs = spiral_inside_SEs + 1
 
     spiral_outskirt_IIs = 0
+    spiral_inside_IIs = 0
     for g in spirals:
         for sn in g.supernovae:
             if sn.sn_type_class() == 'II':
                 if sn.distance_ratio("read") >= 1.0:
                     spiral_outskirt_IIs = spiral_outskirt_IIs + 1
+                else:
+                    spiral_inside_IIs = spiral_inside_IIs + 1
 
     total_spiral_outskirts = spiral_outskirt_Ias + spiral_outskirt_SEs + spiral_outskirt_IIs
+    total_spiral_inside = spiral_inside_Ias + spiral_inside_SEs + spiral_inside_IIs
 
     print("Total numbers of supernovae in the outskirts of spirals:", total_spiral_outskirts)
     print("Number SNe Ia: ", spiral_outskirt_Ias, "(", "%1.3f" % (100 * spiral_outskirt_Ias / total_spiral_outskirts), "%)")
@@ -1082,6 +1106,17 @@ def sne_type_distribution():
     print("\t68% Confidence interval:", scipy.stats.poisson.interval(0.68, spiral_outskirt_IIs))
     print("CC SNe / SNe Ia: ", spiral_outskirt_SEs + spiral_outskirt_IIs, "/", spiral_outskirt_Ias, "=", \
           "%1.3f" % ((spiral_outskirt_SEs + spiral_outskirt_IIs) / spiral_outskirt_Ias))
+    print()
+
+    print("Total numbers of supernovae in the inside of spirals:", total_spiral_inside)
+    print("Number SNe Ia: ", spiral_inside_Ias, "(", "%1.3f" % (100 * spiral_inside_Ias / total_spiral_inside), "%)")
+    print("\t68% Confidence interval:", scipy.stats.poisson.interval(0.68, spiral_inside_Ias))
+    print("Number SNe SE: ", spiral_inside_SEs, "(", "%1.3f" % (100 * spiral_inside_SEs / total_spiral_inside), "%)")
+    print("\t68% Confidence interval:", scipy.stats.poisson.interval(0.68, spiral_inside_SEs))
+    print("Number SNe II: ", spiral_inside_IIs, "(", "%1.3f" % (100 * spiral_inside_IIs / total_spiral_inside), "%)")
+    print("\t68% Confidence interval:", scipy.stats.poisson.interval(0.68, spiral_inside_IIs))
+    print("CC SNe / SNe Ia: ", spiral_inside_SEs + spiral_inside_IIs, "/", spiral_inside_Ias, "=", \
+          "%1.3f" % ((spiral_inside_SEs + spiral_inside_IIs) / spiral_inside_Ias))
     print()
 
     dwarfs = [curr_gal for curr_gal in list_galaxies if 0.0 < curr_gal.stellar_mass_Lum < 0.1]
@@ -1199,36 +1234,47 @@ def sn_count_cdf(arr, n):
 
 # call the desired function from this __main__ function
 def __main__():
-    spiral_Ia = spiral_sne_vs_radius('Ia', 0.1)
-    spiral_SE = spiral_sne_vs_radius('SE', 0.1)
-    spiral_II = spiral_sne_vs_radius('II', 0.1)
-    dwarf_Ia = dwarf_sne_vs_radius('Ia', 0.1)
-    dwarf_SE = dwarf_sne_vs_radius('SE', 0.1)
-    dwarf_II = dwarf_sne_vs_radius('II', 0.1)
+    #spiral_Ia = spiral_sne_vs_radius('Ia', 0.1)
+    #spiral_SE = spiral_sne_vs_radius('SE', 0.1)
+    #spiral_II = spiral_sne_vs_radius('II', 0.1)
+    #dwarf_Ia = dwarf_sne_vs_radius('Ia', 0.1)
+    #dwarf_SE = dwarf_sne_vs_radius('SE', 0.1)
+    #dwarf_II = dwarf_sne_vs_radius('II', 0.1)
 
-    print(scipy.stats.ks_2samp(spiral_Ia, dwarf_Ia))
-    print(scipy.stats.ks_2samp(spiral_SE, dwarf_SE))
-    print(scipy.stats.ks_2samp(spiral_II, dwarf_II))
+    #print(scipy.stats.ks_2samp(spiral_Ia, dwarf_Ia))
+    #print(scipy.stats.ks_2samp(spiral_SE, dwarf_SE))
+    #print(scipy.stats.ks_2samp(spiral_II, dwarf_II))
 
-    print(scipy.stats.anderson_ksamp([spiral_Ia, dwarf_Ia]))
-    print(scipy.stats.anderson_ksamp([spiral_SE, dwarf_SE]))
-    print(scipy.stats.anderson_ksamp([spiral_II, dwarf_II]))
+    #print(scipy.stats.anderson_ksamp([spiral_Ia, dwarf_Ia]))
+    #print(scipy.stats.anderson_ksamp([spiral_SE, dwarf_SE]))
+    #print(scipy.stats.anderson_ksamp([spiral_II, dwarf_II]))
 
     # Example usage of the CDF
-    curr_rad = 1.0
-    print('CDF for Spiral Ias at r / r25 =', curr_rad, ':', sn_count_cdf(spiral_Ia, curr_rad))
+    #curr_rad = 1.0
+    #print('CDF for Spiral Ias at r / r25 =', curr_rad, ':', sn_count_cdf(spiral_Ia, curr_rad))
 
     # Here's how to calculate the CDF for CC SNe:
     # append the list of SNe II radii to the list of SE SNe to produce the list of CC SNe
     # CC SNe = SE SNe + SNe II
-    spiral_CC = spiral_SE + spiral_II
-    dwarf_CC = dwarf_SE + dwarf_II
+    #spiral_CC = spiral_SE + spiral_II
+    #dwarf_CC = dwarf_SE + dwarf_II
 
-    print('CDF for Spiral CCs at r / r25 =', curr_rad, ':', sn_count_cdf(spiral_CC, curr_rad))
-    print('CDF for Dwarf CCs at r / r25 =', curr_rad, ':', sn_count_cdf(dwarf_CC, curr_rad))
+    #print('CDF for Spiral CCs at r / r25 =', curr_rad, ':', sn_count_cdf(spiral_CC, curr_rad))
+    #print('CDF for Dwarf CCs at r / r25 =', curr_rad, ':', sn_count_cdf(dwarf_CC, curr_rad))
 
     #sne_radial_histogram()
 
+    if False:
+        print('*** Spiral Outskirts (M > 10^9 Msun) ***')
+        total_rate_outskirts_spirals_all_types(use_mass_cut=True)
+
+        print('*** Spiral Outskirts ( no mass cut ) ***')
+        total_rate_outskirts_spirals_all_types(use_mass_cut=False)
+
+        print('*** Dwarfs                           ***')
+        total_rate_dwarfs_all_types()
+
+    total_sn_rate_outskirts(10)
+    total_sn_rate_outskirts(10, rate_function=sn_rate_outskirts_all_types, yrange=[0.003, 30])
 
 __main__()
-

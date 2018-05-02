@@ -112,7 +112,7 @@ def sn_rate_total(galaxy_bin, sn_type):
     return total_sne / control_time_sum, (total_sne - sne_err_low) / control_time_sum, (sne_err_high - total_sne) / control_time_sum
 
 # returns the rate of a certain type of supernova in a bin of galaxies
-def sn_rate_outskirts_all_types(galaxy_bin):
+def sn_rate_outskirts_all_types(galaxy_bin, sn_type_throw_away):
     total_sne = 0
     control_time_sum = 0
     for g in galaxy_bin:
