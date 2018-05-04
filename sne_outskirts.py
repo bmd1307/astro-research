@@ -356,6 +356,32 @@ def hist_total_sne_by_stellar_mass(n_bins = 10):
               '%.3g' % (1.0 * sne_out_bins[i] / sne_tot_bins[i]), \
               sep = '\t')
 
+    # count the number of supernovae in dwarf and spiral galaxies
+
+    dwarf_galaxies =  [curr_gal for curr_gal in gal_dict.values() if 0.0 < curr_gal.stellar_mass_Lum < 0.1]
+    not_dwarfs =      [curr_gal for curr_gal in gal_dict.values() if 0.1 <= curr_gal.stellar_mass_Lum]
+    all_spirals =     [curr_gal for curr_gal in gal_dict.values() if curr_gal.hubble_type[0] == 'S']
+    spirals_massive = [curr_gal for curr_gal in gal_dict.values() \
+                            if curr_gal.hubble_type[0] == 'S' and 0.1 <= curr_gal.stellar_mass_Lum]
+
+
+    dwarf_tot_sne =       sum([curr_gal.count_total_sne() for curr_gal in dwarf_galaxies])
+    not_dwarf_tot_sne =   sum([curr_gal.count_total_sne() for curr_gal in not_dwarfs])
+    all_spirals_tot_sne = sum([curr_gal.count_total_sne() for curr_gal in all_spirals])
+    spirals_massive_tot_sne     = sum([curr_gal.count_total_sne() for curr_gal in spirals_massive])
+
+    dwarf_out_sne           = sum([curr_gal.count_outskirts_sne() for curr_gal in dwarf_galaxies])
+    not_dwarf_out_sne       = sum([curr_gal.count_outskirts_sne() for curr_gal in not_dwarfs])
+    all_spirals_out_sne     = sum([curr_gal.count_outskirts_sne() for curr_gal in all_spirals])
+    spirals_massive_out_sne = sum([curr_gal.count_outskirts_sne() for curr_gal in spirals_massive])
+
+    print('', 'Count Galaxies', 'Total SNe', 'Outskirts SNe', '% in outskirts',sep='\t')
+    print('Dwarfs (log10(M*) < 9)', len(dwarf_galaxies), dwarf_tot_sne, dwarf_out_sne, '%1.3f' % (dwarf_out_sne / dwarf_tot_sne), sep = '\t')
+    print('Non-Dwarfs (log10(M*) > 9)',len(not_dwarfs), not_dwarf_tot_sne, not_dwarf_out_sne, '%1.3f' % (not_dwarf_out_sne / not_dwarf_tot_sne), sep='\t')
+    print('All Spirals', len(all_spirals), all_spirals_tot_sne, all_spirals_out_sne, '%1.3f' % (all_spirals_out_sne / all_spirals_tot_sne), sep='\t')
+    print('Spirals with M > 10^9 Msun', len(spirals_massive), spirals_massive_tot_sne, spirals_massive_out_sne,
+          '%1.3f' % (spirals_massive_out_sne / spirals_massive_tot_sne), sep='\t')
+
     plt.step(bin_limits[:-1], sne_tot_bins, where='post')
     plt.step(bin_limits[:-1], sne_out_bins, where='post')
 
@@ -1232,6 +1258,37 @@ def dwarf_sne_vs_radius(type, ring_width):
 def sn_count_cdf(arr, n):
     return list(map(lambda x: x < n, arr)).count(True) / len(arr)
 
+def explore_dwarfs():
+    # parses the full sample of supernovae
+    gal_dict = {}
+    parse_galaxy_file(gal_dict, 'table2.dat', 'galaxy-full.txt')
+
+    # parses the full sample of supernovae (contains those of '?' type)
+    sne_list = []
+    parse_sne_file(sne_list, 'sn-full.txt')
+
+    pair_galaxies_and_sne(gal_dict, sne_list)
+
+    # limits the list of galaxies to the full_optimal with spirals larger than 10^9 Msun
+    list_dwarfs = [curr_gal for curr_gal in gal_dict.values() if 0.0 < curr_gal.stellar_mass_Lum < 0.1]
+
+    print("There are:", len(list_dwarfs), "dwarf galaxies in the full galaxy sample.")
+
+    hubble_class_dict = {}
+    for curr_gal in list_dwarfs:
+        curr_type = curr_gal.hubble_type
+        if curr_type not in hubble_class_dict:
+            hubble_class_dict[curr_type] = 0
+        else:
+            hubble_class_dict[curr_type] = hubble_class_dict[curr_type] + 1
+
+    key_list = sorted(hubble_class_dict.keys())
+
+    for key in key_list:
+        print(key, hubble_class_dict[key])
+
+    print(hubble_class_dict)
+
 # call the desired function from this __main__ function
 def __main__():
     #spiral_Ia = spiral_sne_vs_radius('Ia', 0.1)
@@ -1274,7 +1331,9 @@ def __main__():
         print('*** Dwarfs                           ***')
         total_rate_dwarfs_all_types()
 
-    total_sn_rate_outskirts(10)
-    total_sn_rate_outskirts(10, rate_function=sn_rate_outskirts_all_types, yrange=[0.003, 30])
+        total_sn_rate_outskirts(10)
+        total_sn_rate_outskirts(10, rate_function=sn_rate_outskirts_all_types, yrange=[0.003, 30])
+
+    explore_dwarfs()
 
 __main__()

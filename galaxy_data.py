@@ -18,12 +18,21 @@ class Galaxy:
         self.dec_deg                = float(file_line[96:104])
 
         # # These attributes don't exist for each galaxy in the .dat file
-        # self.stellar_mass_galspec   = float(file_line[128:135])
-        # self.sfr_SDSS               = float(file_line[136:143])
-        # self.sfr_galspec            = float(file_line[144:153])
-        # self.metallicity            = float(file_line[154:160])
-        # self.sfr_petrosian          = float(file_line[161:168])
-        # self.sfr_sersic             = float(file_line[169:176])
+        if False:
+        #if(len(file_line) > 120):
+            self.stellar_mass_galspec   = float(file_line[128:135])
+            self.sfr_SDSS               = float(file_line[136:143])
+            self.sfr_galspec            = float(file_line[144:153])
+            self.metallicity            = float(file_line[154:160])
+            self.sfr_petrosian          = float(file_line[161:168])
+            self.sfr_sersic             = float(file_line[169:176])
+        else:
+            self.stellar_mass_galspec = None
+            self.sfr_SDSS             = None
+            self.sfr_galspec          = None
+            self.metallicity          = None
+            self.sfr_petrosian        = None
+            self.sfr_sersic           = None
 
         self.supernovae             = None # initialize this to none to indicate that it hasn't been parsed yet, not that it has zero galaxies
 
