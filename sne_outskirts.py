@@ -1288,6 +1288,10 @@ def explore_dwarfs():
         print(key, hubble_class_dict[key])
 
     print(hubble_class_dict)
+    print()
+
+    
+
 
 # call the desired function from this __main__ function
 def __main__():

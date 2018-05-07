@@ -17,22 +17,28 @@ class Galaxy:
         self.ra_deg                 = float(file_line[87:95])
         self.dec_deg                = float(file_line[96:104])
 
+        # These values may not exist, so set them as none
+        self.stellar_mass_galspec = None
+        self.sfr_SDSS             = None
+        self.sfr_galspec          = None
+        self.metallicity          = None
+        self.sfr_petrosian        = None
+        self.sfr_sersic           = None
+
         # # These attributes don't exist for each galaxy in the .dat file
-        if False:
-        #if(len(file_line) > 120):
+        # so check that the value exists before writing it
+        if(len(file_line) >= 135 and file_line[128:135].strip() != ''):
             self.stellar_mass_galspec   = float(file_line[128:135])
+        if(len(file_line) >= 143 and file_line[136:143].strip() != ''):
             self.sfr_SDSS               = float(file_line[136:143])
+        if(len(file_line) >= 153 and file_line[144:153].strip() != ''):
             self.sfr_galspec            = float(file_line[144:153])
+        if(len(file_line) >= 160 and file_line[154:160].strip() != ''):
             self.metallicity            = float(file_line[154:160])
+        if(len(file_line) >= 168 and file_line[161:168].strip() != ''):
             self.sfr_petrosian          = float(file_line[161:168])
+        if(len(file_line) >= 176 and file_line[169:176].strip() != ''):
             self.sfr_sersic             = float(file_line[169:176])
-        else:
-            self.stellar_mass_galspec = None
-            self.sfr_SDSS             = None
-            self.sfr_galspec          = None
-            self.metallicity          = None
-            self.sfr_petrosian        = None
-            self.sfr_sersic           = None
 
         self.supernovae             = None # initialize this to none to indicate that it hasn't been parsed yet, not that it has zero galaxies
 
@@ -179,6 +185,9 @@ class Galaxy:
     # returns the average of the control times for total supernova rate calculation
     def mean_control_time(self):
         return (self.tc_Ia + self.tc_SE + self.tc_II) / 3.0
+
+    def has_sfr(self):
+        return (self.sfr_galspec != None) or (self.sfr_petrosian != None) or (self.sfr_SDSS != None) or (self.sfr_sersic != None)
 
 def parse_galaxy_file(gal_dict, main_file_name, axes_file_name):
     print('Parsing file ' + main_file_name)
