@@ -780,6 +780,116 @@ def total_rate_dwarfs_all_types():
           'SNe / (1000 yr) ')
 
 
+# calculates the supernova rate in the dwarf irregular galaxies in the galaxy sample
+# prints the details of the calculation
+def total_rate_dwarf_irr():
+    # parses the full sample of supernovae
+    gal_dict = {}
+    parse_galaxy_file(gal_dict, 'table2.dat', 'galaxy-full.txt')
+
+    # parses the full sample of supernovae
+    sne_list = []
+    parse_sne_file(sne_list, 'sn-full.txt')
+
+    pair_galaxies_and_sne(gal_dict, sne_list)
+
+    # limits the list of galaxies to the
+    list_galaxies = [curr_gal for curr_gal in gal_dict.values() \
+                     if 0.0 < curr_gal.stellar_mass_Lum <= 0.1 and \
+                     curr_gal.hubble_type[0] == 'I']
+
+    num_sne = sum([len(curr_gal.supernovae) for curr_gal in list_galaxies])
+
+    mean_mass = bin_mean_mass(list_galaxies)
+
+    lowest_mass = min([curr_gal.stellar_mass_Lum for curr_gal in list_galaxies])
+    highest_mass = max([curr_gal.stellar_mass_Lum for curr_gal in list_galaxies])
+
+    print('Found', len(list_galaxies), 'dwarf galaxies (M* < 10^9 Msun)')
+    print('These galaxies host', num_sne, 'supernovae')
+    print('Mean galaxy mass:', '%.3e' % (mean_mass * 1e10), 'Msun')
+    print('Minimum galaxy mass:', '%.3e' % (lowest_mass * 1e10), 'Msun')
+    print('Maximum galaxy mass:', '%.3e' % (highest_mass * 1e10), 'Msun')
+
+    rate_Ia, low_Ia, high_Ia = sn_rate_total(list_galaxies, 'Ia')
+    rate_SE, low_SE, high_SE = sn_rate_total(list_galaxies, 'SE')
+    rate_II, low_II, high_II = sn_rate_total(list_galaxies, 'II')
+
+    print('Type Ia rate:', '%1.3f' % (rate_Ia * 1e12), '(-' '%1.3f' % (low_Ia * 1e12), ', +' + \
+          '%1.3f' % (high_Ia * 1e12), ')', '* 10^-12 SNe yr^-1 Msun^-1')
+    print('Type SE rate:', '%1.3f' % (rate_SE * 1e12), '(-' '%1.3f' % (low_SE * 1e12), ', +' + \
+          '%1.3f' % (high_SE * 1e12), ')', '* 10^-12 SNe yr^-1 Msun^-1')
+    print('Type II rate:', '%1.3f' % (rate_II * 1e12), '(-' '%1.3f' % (low_II * 1e12), ', +' + \
+          '%1.3f' % (high_II * 1e12), ')', '* 10^-12 SNe yr^-1 Msun^-1')
+    print()
+
+    total_rate, total_low, total_high = sn_rate_total_all_types(list_galaxies)
+
+    print('Total rate:', '%1.3f' % (total_rate * 1e12), '(-' '%1.3f' % (total_low * 1e12), ', +' + \
+          '%1.3f' % (total_high * 1e12), ')', '* 10^-12 SNe yr^-1 Msun^-1')
+
+    # calculates the number of SNe per millenium
+    sne_per_mill = total_rate * mean_mass * 1e10 * 1e3
+    sne_per_mill_low = total_low * mean_mass * 1e10 * 1e3
+    sne_per_mill_high = total_high * mean_mass * 1e10 * 1e3
+
+    print('SNe / millenium (rate * avg mass):', \
+          '%1.3f' % sne_per_mill, '(-', '%1.3f' % sne_per_mill_low, ',+', '%1.3f' % sne_per_mill_high, ')',
+          'SNe / (1000 yr) ')
+
+def total_rate_all_types():
+    # parses the full sample of supernovae
+    gal_dict = {}
+    parse_galaxy_file(gal_dict, 'table2.dat', 'galaxy-full.txt')
+
+    # parses the full sample of supernovae
+    sne_list = []
+    parse_sne_file(sne_list, 'sn-full.txt')
+
+    pair_galaxies_and_sne(gal_dict, sne_list)
+
+    # limits the list of galaxies to the
+    list_galaxies = [curr_gal for curr_gal in gal_dict.values() if curr_gal.full_optimal and curr_gal.stellar_mass_Lum > 0.0]
+
+    num_sne = sum([len(curr_gal.supernovae) for curr_gal in list_galaxies])
+
+    mean_mass = bin_mean_mass(list_galaxies)
+
+    lowest_mass = min([curr_gal.stellar_mass_Lum for curr_gal in list_galaxies])
+    highest_mass = max([curr_gal.stellar_mass_Lum for curr_gal in list_galaxies])
+
+    print('Found', len(list_galaxies), 'galaxies')
+    print('These galaxies host', num_sne, 'supernovae')
+    print('Mean galaxy mass:', '%.3e' % (mean_mass * 1e10), 'Msun')
+    print('Minimum galaxy mass:', '%.3e' % (lowest_mass * 1e10), 'Msun')
+    print('Maximum galaxy mass:', '%.3e' % (highest_mass * 1e10), 'Msun')
+
+    rate_Ia, low_Ia, high_Ia = sn_rate_total(list_galaxies, 'Ia')
+    rate_SE, low_SE, high_SE = sn_rate_total(list_galaxies, 'SE')
+    rate_II, low_II, high_II = sn_rate_total(list_galaxies, 'II')
+
+    print('Type Ia rate:', '%1.3f' % (rate_Ia * 1e12), '(-' '%1.3f' % (low_Ia * 1e12), ', +' + \
+          '%1.3f' % (high_Ia * 1e12), ')', '* 10^-12 SNe yr^-1 Msun^-1')
+    print('Type SE rate:', '%1.3f' % (rate_SE * 1e12), '(-' '%1.3f' % (low_SE * 1e12), ', +' + \
+          '%1.3f' % (high_SE * 1e12), ')', '* 10^-12 SNe yr^-1 Msun^-1')
+    print('Type II rate:', '%1.3f' % (rate_II * 1e12), '(-' '%1.3f' % (low_II * 1e12), ', +' + \
+          '%1.3f' % (high_II * 1e12), ')', '* 10^-12 SNe yr^-1 Msun^-1')
+    print()
+
+    total_rate, total_low, total_high = sn_rate_total_all_types(list_galaxies)
+
+    print('Total rate:', '%1.3f' % (total_rate * 1e12), '(-' '%1.3f' % (total_low * 1e12), ', +' + \
+          '%1.3f' % (total_high * 1e12), ')', '* 10^-12 SNe yr^-1 Msun^-1')
+
+    # calculates the number of SNe per millenium
+    sne_per_mill = total_rate * mean_mass * 1e10 * 1e3
+    sne_per_mill_low = total_low * mean_mass * 1e10 * 1e3
+    sne_per_mill_high = total_high * mean_mass * 1e10 * 1e3
+
+    print('SNe / millenium (rate * avg mass):', \
+          '%1.3f' % sne_per_mill, '(-', '%1.3f' % sne_per_mill_low, ',+', '%1.3f' % sne_per_mill_high, ')',
+          'SNe / (1000 yr) ')
+
 # calculates the supernova rate in the outskirts of the spiral galaxies in the galaxy sample
 # prints the details of the calculation
 def total_rate_outskirts_spirals_all_types(use_mass_cut = True):
@@ -1290,8 +1400,70 @@ def explore_dwarfs():
     print(hubble_class_dict)
     print()
 
-    
+    num_sfr_dwarfs = sum([int(curr_gal.has_sfr()) for curr_gal in list_dwarfs])
+    print('Total dwarfs:', len(list_dwarfs))
+    print('Dwarfs with sfr data:', num_sfr_dwarfs)
 
+    list_dwarfs_with_sne = [curr_gal for curr_gal in list_dwarfs if curr_gal.count_total_sne() > 0]
+    num_sfr_dwarfs_with_sne = sum([int(curr_gal.has_sfr()) for curr_gal in list_dwarfs_with_sne])
+
+    print('Dwarfs with supernovae:', len(list_dwarfs_with_sne))
+    print('Dwarfs with SNe and SFR data', num_sfr_dwarfs_with_sne)
+
+    list_dwarfs_sne_sfr = [curr_gal for curr_gal in list_dwarfs_with_sne if curr_gal.has_sfr()]
+
+    print('Sanity check: length should be the same:', len(list_dwarfs_sne_sfr))
+
+    mass_to_plot = []
+    sfr_to_plot = []
+    for curr_gal in list_dwarfs_sne_sfr:
+        print('', 'Name', curr_gal.name, sep='\t')
+        print('', 'mass', '%1.3e' % (curr_gal.stellar_mass_Lum * 10.0**10), sep='\t')
+        print('', 'sfr', '%1.3f' % curr_gal.sfr_sersic, sep = '\t')
+        mass_to_plot.append(curr_gal.stellar_mass_Lum)
+        sfr_to_plot.append(curr_gal.sfr_sersic)
+
+    plt.scatter(mass_to_plot, sfr_to_plot)
+    plt.show()
+
+
+def examine_uv_outskirts():
+    # parses the full sample of supernovae
+    gal_dict = {}
+
+    parse_galaxy_file(gal_dict, 'table2.dat', 'galaxy-full.txt')
+
+    # parses the full sample of supernovae
+    sne_list = []
+    parse_sne_file(sne_list, 'sn-full.txt')
+
+    # parses the color profiles
+    color_dict = {}
+    parse_color_profile_file(color_dict, 'nearby_galaxy_fuv_radius.txt')
+
+    pair_galaxies_and_colors(gal_dict, color_dict)
+
+    pair_galaxies_and_sne(gal_dict, sne_list)
+
+    profiled_galaxies = [curr_gal for curr_gal in gal_dict.values() if curr_gal.color_profile is not None]
+
+    print('Number of galaxies with profiles:', len(profiled_galaxies))
+
+    print(profiled_galaxies[0].flux_36_profile)
+
+def k_mag_hist():
+    # parses the full sample of supernovae
+    gal_dict = {}
+
+    parse_galaxy_file(gal_dict, 'table2.dat', 'galaxy-full.txt')
+
+    # parses the full sample of supernovae
+    sne_list = []
+    parse_sne_file(sne_list, 'sn-full.txt')
+
+    pair_galaxies_and_sne(gal_dict, sne_list)
+
+    print("SUCCESS!")
 
 # call the desired function from this __main__ function
 def __main__():
@@ -1338,6 +1510,13 @@ def __main__():
         total_sn_rate_outskirts(10)
         total_sn_rate_outskirts(10, rate_function=sn_rate_outskirts_all_types, yrange=[0.003, 30])
 
-    explore_dwarfs()
+    #explore_dwarfs()
+
+    #total_rate_dwarf_irr()
+
+    # total_rate_all_types()
+    # examine_uv_outskirts()
+
+    k_mag_hist()
 
 __main__()

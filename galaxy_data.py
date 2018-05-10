@@ -25,6 +25,9 @@ class Galaxy:
         self.sfr_petrosian        = None
         self.sfr_sersic           = None
 
+        self.k_mag                = None
+        self.k_err                = None
+
         # # These attributes don't exist for each galaxy in the .dat file
         # so check that the value exists before writing it
         if(len(file_line) >= 135 and file_line[128:135].strip() != ''):

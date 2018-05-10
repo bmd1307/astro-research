@@ -11,6 +11,9 @@ def pair_galaxies_and_sne(gal_dict, sne_list):
         g_name = curr_sn.galaxy_name
         if g_name in gal_dict.keys():
             gal_dict[g_name].supernovae.append(curr_sn)
+            if gal_dict[g_name].k_mag is None:
+                gal_dict[g_name].k_mag = curr_sn.galaxy_k_mag
+                gal_dict[g_name].k_err = curr_sn.galaxy_k_err
         else:
             hostless_sne_count = hostless_sne_count + 1
 

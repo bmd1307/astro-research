@@ -65,6 +65,9 @@ class Supernova:
 
         self.galaxy_pa_deg = float(line_vals[37])
 
+        self.galaxy_k_mag = float(line_vals[43]) if line_vals[43] != '99.999' else None
+        self.galaxy_k_err = float(line_vals[44]) if self.galaxy_k_mag is not None else None
+
     # calculates the offset of the SN from the host galaxy by subtracting their coordinates
     # returns a string of the offset in arcsec (ex. '16.0W 4.5N')
     def offset(self):
