@@ -73,6 +73,18 @@ def count_total_sne_outskirts(galaxy_bin):
     return to_return
 
 
+# returns the total number of supernova in a galaxy sample which occur beyond the optical radius
+def count_total_sne_inside(galaxy_bin):
+    to_return = 0
+
+    for curr_gal in galaxy_bin:
+        for curr_sn in curr_gal.supernovae:
+            if curr_sn.distance_ratio("read") < 1.0:
+                to_return = to_return + 1
+
+    return to_return
+
+
 # returns the mean of the stellar masses of a list of galaxy objects
 # param: galaxy_bin - a list of Galaxy objects
 def bin_mean_mass(galaxy_bin):
@@ -109,6 +121,25 @@ def fit_exp(xs, ys):
     print('\tExponent:', results.slope)
 
     return 10**results.intercept, results.slope
+
+
+# luminosity function (Schechter). Parameters from Kochanek et al. (2001)
+def phi(lum):
+    phi_star = 1.16e-2 # number per Mpc^3
+    alpha = -1.09
+    L_star = 4.613e10 # in Lsun
+    return phi_star * (lum/L_star)**alpha * math.exp(-(lum/L_star)) / L_star
+
+
+# integrates the schechter function, returning the number density
+def schechter(low_lum, high_lum):
+    #return coef * (gammaincc(alpha + 1, low_lum) - gammaincc(alpha + 1, high_lum))
+    return integrate.quad(phi, low_lum, high_lum)
+
+
+# integrates the schechter function, returning the luminosity density
+def schechter_density(low_lum, high_lum):
+    return integrate.quad((lambda l: (l) * phi(l)), low_lum, high_lum)
 
 
 # ******************************************************************************
@@ -959,6 +990,75 @@ def total_rate_outskirts_spirals_all_types(use_mass_cut = True):
           'SNe / (1000 yr) ')
 
 
+# calculates the supernova rate in the outskirts of the spiral galaxies in the galaxy sample
+# prints the details of the calculation
+def total_rate_inside_spirals_all_types(use_mass_cut = True):
+    # parses the full sample of supernovae
+    gal_dict = {}
+    parse_galaxy_file(gal_dict, 'table2.dat', 'galaxy-full.txt')
+
+    # parses the full sample of supernovae
+    sne_list = []
+    parse_sne_file(sne_list, 'sn-full.txt')
+
+    pair_galaxies_and_sne(gal_dict, sne_list)
+
+    # limits the list of galaxies to the full_optimal with spirals larger than 10^9 Msun
+    if use_mass_cut:
+        list_galaxies = [curr_gal for curr_gal in gal_dict.values() if \
+                         curr_gal.full_optimal and curr_gal.hubble_type[0] == 'S' and curr_gal.stellar_mass_Lum > 0.1]
+    else:
+        list_galaxies = [curr_gal for curr_gal in gal_dict.values() if \
+                         curr_gal.full_optimal and curr_gal.hubble_type[0] == 'S' and curr_gal.stellar_mass_Lum > 0.0]
+
+    # gets mass data for the galaxies
+    log_gal_masses = [math.log10(10**10 * curr_gal.stellar_mass_Lum) for curr_gal in list_galaxies]
+
+    plt.hist(log_gal_masses, bins = 20)
+    plt.title("Number of Spiral Galaxies vs Stellar Mass")
+    plt.xlabel("Stellar Mass (log(Msun))")
+    plt.ylabel("Number of Galaxies")
+    plt.show()
+
+    num_sne = count_total_sne_inside(list_galaxies)
+
+    mean_mass = bin_mean_mass(list_galaxies)
+    lowest_mass = min([curr_gal.stellar_mass_Lum for curr_gal in list_galaxies])
+    highest_mass = max([curr_gal.stellar_mass_Lum for curr_gal in list_galaxies])
+
+    print('Found', len(list_galaxies), 'spiral galaxies')
+    print('These galaxies host', num_sne, 'supernovae')
+    print('Mean galaxy mass:', '%.3e' % (mean_mass * 1e10), 'Msun')
+    print('Minimum galaxy mass:', '%.3e' % (lowest_mass * 1e10), 'Msun')
+    print('Maximum galaxy mass:', '%.3e' % (highest_mass * 1e10), 'Msun')
+
+    rate_Ia, low_Ia, high_Ia = sn_rate_inside(list_galaxies, 'Ia')
+    rate_SE, low_SE, high_SE = sn_rate_inside(list_galaxies, 'SE')
+    rate_II, low_II, high_II = sn_rate_inside(list_galaxies, 'II')
+
+    print('Type Ia rate:', '%1.3f' % (rate_Ia * 1e12), '(-' '%1.3f' % (low_Ia * 1e12), ', +' + \
+          '%1.3f' % (high_Ia * 1e12), ')', '* 10^-12 SNe yr^-1 Msun^-1')
+    print('Type SE rate:', '%1.3f' % (rate_SE * 1e12), '(-' '%1.3f' % (low_SE * 1e12), ', +' + \
+          '%1.3f' % (high_SE * 1e12), ')', '* 10^-12 SNe yr^-1 Msun^-1')
+    print('Type II rate:', '%1.3f' % (rate_II * 1e12), '(-' '%1.3f' % (low_II * 1e12), ', +' + \
+          '%1.3f' % (high_II * 1e12), ')', '* 10^-12 SNe yr^-1 Msun^-1')
+    print()
+
+    total_rate, total_low, total_high = sn_rate_inside_all_types(list_galaxies)
+
+    print('Total rate:', '%1.3f' % (total_rate * 1e12), '(-' '%1.3f' % (total_low * 1e12), ', +' + \
+          '%1.3f' % (total_high * 1e12), ')', '* 10^-12 SNe yr^-1 Msun^-1')
+
+    # calculates the number of SNe per millenium
+    sne_per_mill = total_rate * mean_mass * 1e10 * 1e3
+    sne_per_mill_low = total_low * mean_mass * 1e10 * 1e3
+    sne_per_mill_high = total_high * mean_mass * 1e10 * 1e3
+
+    print('SNe / millenium (rate * avg mass):', \
+          '%1.3f' % sne_per_mill, '(-', '%1.3f' % sne_per_mill_low, ',+', '%1.3f' % sne_per_mill_high, ')',
+          'SNe / (1000 yr) ')
+
+
 # runs total_rate_dwarfs and total_rate_outskirts_spirals
 def compare_outskirts_to_dwarfs():
     print('*' * 80)
@@ -1465,6 +1565,86 @@ def k_mag_hist():
 
     print("SUCCESS!")
 
+def kait_fov():
+    gal_dict = {}
+
+    parse_galaxy_file(gal_dict, 'table2.dat', 'galaxy-full.txt')
+
+    # parses the full sample of supernovae
+    sne_list = []
+    parse_sne_file(sne_list, 'sn-full.txt')
+
+    pair_galaxies_and_sne(gal_dict, sne_list)
+
+    for i in range(1, 6):
+        print('Aperture (r/R25)', float(i))
+        list_galaxies = [gal_dict[curr_gal] for curr_gal in gal_dict if (gal_dict[curr_gal].maj_axis_min * i) < 6.7]
+
+        print('Galaxies smaller than aperture:', len(list_galaxies))
+        print('Galaxies larger that aperture:', len(gal_dict) - len(list_galaxies))
+
+    r25_list = [gal_dict[curr_gal].maj_axis_min for curr_gal in gal_dict.keys()]
+
+    distance_ratios = [sn.distance_ratio('read') for sn in sne_list]
+
+    #plt.yscale('log')
+    #plt.hist(r25_list)
+    #plt.show()
+
+    list_galaxies = [gal_dict[curr_gal] for curr_gal in gal_dict if (gal_dict[curr_gal].maj_axis_min * 4) < 6.7]
+
+    full_sne_list = []
+    for curr_gal in list_galaxies:
+        full_sne_list = full_sne_list + curr_gal.supernovae
+
+    print('Number of SNe in the full sample:', len(full_sne_list))
+
+    full_r25s = [sn.distance_ratio('read') for sn in full_sne_list]
+
+    full_distance_ratios = [sn.distance_ratio('read') for sn in full_sne_list]
+
+    #plt.yscale('log')
+    #plt.hist(full_r25s)
+    #plt.show()
+
+    #plt.hist(full_distance_ratios, bins=freedman_diaconis_nbins(full_distance_ratios))
+    #plt.show()
+
+    print('Sne where 0.0 < r / 25 < 1.0:', sum(1 for dr in full_distance_ratios if 0 < dr < 1.0))
+    print('Sne where 1.0 < r / 25 <= 2.0:', sum(1 for dr in full_distance_ratios if 1.0 <= dr < 2.0))
+    print('Sne where 2.0 < r / 25 <= 3.0:', sum(1 for dr in full_distance_ratios if 2.0 <= dr < 3.0))
+    print('Sne where 3.0 < r / 25 <= 4.0:', sum(1 for dr in full_distance_ratios if 3.0 <= dr < 4.0))
+
+    for curr_rad in range(0, 5):
+
+        lower_bound = float(curr_rad + 1e-99)
+
+        if curr_rad != 4:
+            upper_bound = float(curr_rad + 1)
+        else:
+            upper_bound = 1e99
+
+        # use the 1e-99 to avoid the divide by zero error
+        curr_list_gals = [gal_dict[curr_gal] for curr_gal in gal_dict \
+                            if (6.7 / upper_bound) < gal_dict[curr_gal].maj_axis_min < (6.7 / lower_bound)]
+
+        curr_sne_list = []
+        for curr_gal in curr_list_gals:
+            curr_sne_list = curr_sne_list + curr_gal.supernovae
+
+        curr_drs = [sn.distance_ratio('read') for sn in curr_sne_list]
+        print('Galaxies between', lower_bound, 'and', upper_bound, ':', len(curr_list_gals))
+
+        print('\tSne where 0.0 < r / 25 < 1.0:',  sum(1 for dr in curr_drs if 0 < dr < 1.0))
+        print('\tSne where 1.0 < r / 25 <= 2.0:', sum(1 for dr in curr_drs if 1.0 <= dr < 2.0))
+        print('\tSne where 2.0 < r / 25 <= 3.0:', sum(1 for dr in curr_drs if 2.0 <= dr < 3.0))
+        print('\tSne where 3.0 < r / 25 <= 4.0:', sum(1 for dr in curr_drs if 3.0 <= dr < 4.0))
+        print('\tSne where 4.0 < r / 25 <= inf:', sum(1 for dr in curr_drs if 4.0 <= dr))
+
+def find_luminosity_density():
+    pass
+
+
 # call the desired function from this __main__ function
 def __main__():
     #spiral_Ia = spiral_sne_vs_radius('Ia', 0.1)
@@ -1517,6 +1697,8 @@ def __main__():
     # total_rate_all_types()
     # examine_uv_outskirts()
 
-    k_mag_hist()
+    # total_rate_inside_spirals_all_types()
+
+    kait_fov()
 
 __main__()

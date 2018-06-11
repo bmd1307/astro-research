@@ -12,6 +12,7 @@ class Galaxy:
         self.tc_SE                  = float(file_line[37:42])
         self.tc_II                  = float(file_line[43:49])
         self.stellar_mass_Lum       = float(file_line[50:58])
+        self.k_lum                  = float(file_line[67:75])
         self.distance               = float(file_line[76:82])
         self.hubble_type            = file_line[83:86]
         self.ra_deg                 = float(file_line[87:95])
