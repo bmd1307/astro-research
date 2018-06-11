@@ -1642,7 +1642,61 @@ def kait_fov():
         print('\tSne where 4.0 < r / 25 <= inf:', sum(1 for dr in curr_drs if 4.0 <= dr))
 
 def find_luminosity_density():
-    pass
+    # sn_rate_lum_outskirts_all_types
+    # sn_rate_lum_total_all_types
+
+    # parses the full sample of supernovae
+    gal_dict = {}
+    parse_galaxy_file(gal_dict, 'table2.dat', 'galaxy-full.txt')
+
+    # parses the full sample of supernovae
+    sne_list = []
+    parse_sne_file(sne_list, 'sn-full.txt')
+
+    pair_galaxies_and_sne(gal_dict, sne_list)
+
+    # limits the list of galaxies to the full_optimal
+    list_galaxies = [curr_gal for curr_gal in gal_dict.values() if curr_gal.full_optimal]
+
+    # TODO Change the SN rate functions below
+
+    num_sne = count_total_sne_outskirts(list_galaxies)
+
+    mean_mass = bin_mean_mass(list_galaxies)
+    lowest_mass = min([curr_gal.stellar_mass_Lum for curr_gal in list_galaxies])
+    highest_mass = max([curr_gal.stellar_mass_Lum for curr_gal in list_galaxies])
+
+    print('Found', len(list_galaxies), 'spiral galaxies')
+    print('These galaxies host', num_sne, 'supernovae')
+    print('Mean galaxy mass:', '%.3e' % (mean_mass * 1e10), 'Msun')
+    print('Minimum galaxy mass:', '%.3e' % (lowest_mass * 1e10), 'Msun')
+    print('Maximum galaxy mass:', '%.3e' % (highest_mass * 1e10), 'Msun')
+
+    rate_Ia, low_Ia, high_Ia = sn_rate_lum_outskirts(list_galaxies, 'Ia')
+    rate_SE, low_SE, high_SE = sn_rate_lum_outskirts(list_galaxies, 'SE')
+    rate_II, low_II, high_II = sn_rate_lum_outskirts(list_galaxies, 'II')
+
+    print('Type Ia rate:', '%1.3f' % (rate_Ia * 1e12), '(-' '%1.3f' % (low_Ia * 1e12), ', +' + \
+          '%1.3f' % (high_Ia * 1e12), ')', '* 10^-12 SNe yr^-1 Msun^-1')
+    print('Type SE rate:', '%1.3f' % (rate_SE * 1e12), '(-' '%1.3f' % (low_SE * 1e12), ', +' + \
+          '%1.3f' % (high_SE * 1e12), ')', '* 10^-12 SNe yr^-1 Msun^-1')
+    print('Type II rate:', '%1.3f' % (rate_II * 1e12), '(-' '%1.3f' % (low_II * 1e12), ', +' + \
+          '%1.3f' % (high_II * 1e12), ')', '* 10^-12 SNe yr^-1 Msun^-1')
+    print()
+
+    total_rate, total_low, total_high = sn_rate_lum_outskirts_all_types(list_galaxies)
+
+    print('Total rate:', '%1.3f' % (total_rate * 1e12), '(-' '%1.3f' % (total_low * 1e12), ', +' + \
+          '%1.3f' % (total_high * 1e12), ')', '* 10^-12 SNe yr^-1 Msun^-1')
+
+    # calculates the number of SNe per millenium
+    sne_per_mill = total_rate * mean_mass * 1e10 * 1e3
+    sne_per_mill_low = total_low * mean_mass * 1e10 * 1e3
+    sne_per_mill_high = total_high * mean_mass * 1e10 * 1e3
+
+    print('SNe / millenium (rate * avg mass):', \
+          '%1.3f' % sne_per_mill, '(-', '%1.3f' % sne_per_mill_low, ',+', '%1.3f' % sne_per_mill_high, ')',
+          'SNe / (1000 yr) ')
 
 
 # call the desired function from this __main__ function
