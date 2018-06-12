@@ -141,8 +141,13 @@ print('******')
 
 print('Total Luminosity of Graur galaxies (Lsun):', '%1.3e' % sum(graur_lums))
 print('Volume of graur sample (Mpc):', volume)
-print('Graur overall luminosity density:', '%1.3e' % (sum(graur_lums) / volume))
-print('Schechter density 1e6 to 1e12', '%1.3e' % schechter_density(1e6, 1e12)[0])
+print('Graur overall luminosity density:', '%1.9e' % (sum(graur_lums) / volume))
+for i in range(130, 160):
+    print('Schechter density 1e6 to 1e%.1f' % (i / 10.), '%1.3e' % schechter_density(1e6, 10**(i/10.))[0])
+
+for i in range(0, 9):
+    print('Schechter density 1e%i to 1e12' % i, '%1.9e' % schechter_density(10**i, 1e12)[0])
+    
 print('Inferred SN count from schechter density', '%8i' % (schechter_density(1e6, 1e12)[0] * 1.3e-2))
 
 gal_file.close()

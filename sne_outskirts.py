@@ -1641,7 +1641,18 @@ def kait_fov():
         print('\tSne where 3.0 < r / 25 <= 4.0:', sum(1 for dr in curr_drs if 3.0 <= dr < 4.0))
         print('\tSne where 4.0 < r / 25 <= inf:', sum(1 for dr in curr_drs if 4.0 <= dr))
 
-def find_luminosity_density():
+def find_luminosity_rates():
+    print("*** Luminosity Rates in Dwarfs")
+
+    lum_cut = 0.125 * 10**1.5
+
+    lum_rate_dwarfs(lum_cut)
+
+    print("*** Luminosity Rates in Spiral Outskirts ***")
+
+    lum_rate_outskirts(lum_cut)
+
+def lum_rate_outskirts(lum_cut):
     # sn_rate_lum_outskirts_all_types
     # sn_rate_lum_total_all_types
 
@@ -1656,7 +1667,8 @@ def find_luminosity_density():
     pair_galaxies_and_sne(gal_dict, sne_list)
 
     # limits the list of galaxies to the full_optimal
-    list_galaxies = [curr_gal for curr_gal in gal_dict.values() if curr_gal.full_optimal]
+    list_galaxies = [curr_gal for curr_gal in gal_dict.values() if curr_gal.full_optimal and \
+                        curr_gal.hubble_type[0] == 'S' and curr_gal.k_lum > lum_cut]
 
     # TODO Change the SN rate functions below
 
@@ -1672,64 +1684,133 @@ def find_luminosity_density():
     print('Minimum galaxy mass:', '%.3e' % (lowest_mass * 1e10), 'Msun')
     print('Maximum galaxy mass:', '%.3e' % (highest_mass * 1e10), 'Msun')
 
+    mean_lum = sum([curr_gal.k_lum for curr_gal in list_galaxies]) / len(list_galaxies)
+    lowest_lum = min([curr_gal.k_lum for curr_gal in list_galaxies])
+    highest_lum = max([curr_gal.k_lum for curr_gal in list_galaxies])
+
+    print('Minimum galaxy luminosity:', '%.3e' % (mean_lum * 1e10), 'Lsun')
+    print('Minimum galaxy luminosity:', '%.3e' % (lowest_lum * 1e10), 'Lsun')
+    print('Maximum galaxy luminosity:', '%.3e' % (highest_lum * 1e10), 'Lsun')
+
+    lum_density = schechter_density(lum_cut * 1e10, 10**14.5)[0]
+    print('Luminosity density of Spiral galaxies:', '%.3e' % (lum_density), 'Lsun/Mpc^3')
+
     rate_Ia, low_Ia, high_Ia = sn_rate_lum_outskirts(list_galaxies, 'Ia')
     rate_SE, low_SE, high_SE = sn_rate_lum_outskirts(list_galaxies, 'SE')
     rate_II, low_II, high_II = sn_rate_lum_outskirts(list_galaxies, 'II')
 
     print('Type Ia rate:', '%1.3f' % (rate_Ia * 1e12), '(-' '%1.3f' % (low_Ia * 1e12), ', +' + \
-          '%1.3f' % (high_Ia * 1e12), ')', '* 10^-12 SNe yr^-1 Msun^-1')
+          '%1.3f' % (high_Ia * 1e12), ')', '* 10^-12 SNe yr^-1 Lsun^-1')
     print('Type SE rate:', '%1.3f' % (rate_SE * 1e12), '(-' '%1.3f' % (low_SE * 1e12), ', +' + \
-          '%1.3f' % (high_SE * 1e12), ')', '* 10^-12 SNe yr^-1 Msun^-1')
+          '%1.3f' % (high_SE * 1e12), ')', '* 10^-12 SNe yr^-1 Lsun^-1')
     print('Type II rate:', '%1.3f' % (rate_II * 1e12), '(-' '%1.3f' % (low_II * 1e12), ', +' + \
-          '%1.3f' % (high_II * 1e12), ')', '* 10^-12 SNe yr^-1 Msun^-1')
+          '%1.3f' % (high_II * 1e12), ')', '* 10^-12 SNe yr^-1 Lsun^-1')
     print()
 
     total_rate, total_low, total_high = sn_rate_lum_outskirts_all_types(list_galaxies)
 
     print('Total rate:', '%1.3f' % (total_rate * 1e12), '(-' '%1.3f' % (total_low * 1e12), ', +' + \
-          '%1.3f' % (total_high * 1e12), ')', '* 10^-12 SNe yr^-1 Msun^-1')
+          '%1.3f' % (total_high * 1e12), ')', '* 10^-12 SNe yr^-1 Lsun^-1')
 
-    # calculates the number of SNe per millenium
-    sne_per_mill = total_rate * mean_mass * 1e10 * 1e3
-    sne_per_mill_low = total_low * mean_mass * 1e10 * 1e3
-    sne_per_mill_high = total_high * mean_mass * 1e10 * 1e3
+    sne_per_vol = total_rate * lum_density * 1e9 # convert volumetric rate to SNe / yr / Gpc^3
+    sne_per_vol_low = total_low * lum_density * 1e9
+    sne_per_vol_high = total_high * lum_density * 1e9
 
-    print('SNe / millenium (rate * avg mass):', \
-          '%1.3f' % sne_per_mill, '(-', '%1.3f' % sne_per_mill_low, ',+', '%1.3f' % sne_per_mill_high, ')',
-          'SNe / (1000 yr) ')
+    print('SNe / Gpc^3 (rate * luminosity density)', \
+          '%1.3f' % sne_per_vol, '(-', '%1.3f' % sne_per_vol_low, ',+', '%1.3f' % sne_per_vol_high, ')',
+          'SNe / Gpc^3 ')
+
+def lum_rate_dwarfs(lum_cut):
+    # sn_rate_lum_outskirts_all_types
+    # sn_rate_lum_total_all_types
+
+    # parses the full sample of supernovae
+    gal_dict = {}
+    parse_galaxy_file(gal_dict, 'table2.dat', 'galaxy-full.txt')
+
+    # parses the full sample of supernovae
+    sne_list = []
+    parse_sne_file(sne_list, 'sn-full.txt')
+
+    pair_galaxies_and_sne(gal_dict, sne_list)
+
+    # limits the list of galaxies to the full_optimal
+    list_galaxies = [curr_gal for curr_gal in gal_dict.values() if curr_gal.full_optimal and\
+                        0.0 < curr_gal.k_lum < lum_cut]
+
+    num_sne = sum([len(curr_gal.supernovae) for curr_gal in list_galaxies])
+
+    mean_mass = bin_mean_mass(list_galaxies)
+    lowest_mass = min([curr_gal.stellar_mass_Lum for curr_gal in list_galaxies])
+    highest_mass = max([curr_gal.stellar_mass_Lum for curr_gal in list_galaxies])
+
+    print('Found', len(list_galaxies), 'dwarfs')
+    print('These galaxies host', num_sne, 'supernovae')
+    print('Mean galaxy mass:', '%.3e' % (mean_mass * 1e10), 'Msun')
+    print('Minimum galaxy mass:', '%.3e' % (lowest_mass * 1e10), 'Msun')
+    print('Maximum galaxy mass:', '%.3e' % (highest_mass * 1e10), 'Msun')
+
+    mean_lum = sum([curr_gal.k_lum for curr_gal in list_galaxies]) / len(list_galaxies)
+    lowest_lum = min([curr_gal.k_lum for curr_gal in list_galaxies])
+    highest_lum = max([curr_gal.k_lum for curr_gal in list_galaxies])
+
+    print('Minimum galaxy luminosity:', '%.3e' % (mean_lum * 1e10), 'Lsun')
+    print('Minimum galaxy luminosity:', '%.3e' % (lowest_lum * 1e10), 'Lsun')
+    print('Maximum galaxy luminosity:', '%.3e' % (highest_lum * 1e10), 'Lsun')
+
+    lum_density = schechter_density(1e0, lum_cut * 1e10)[0]
+    print('Luminosity density of Dwarf galaxies:', '%.3e' % (lum_density), 'Lsun/Mpc^3')
+
+    rate_Ia, low_Ia, high_Ia = sn_rate_lum_total(list_galaxies, 'Ia')
+    rate_SE, low_SE, high_SE = sn_rate_lum_total(list_galaxies, 'SE')
+    rate_II, low_II, high_II = sn_rate_lum_total(list_galaxies, 'II')
+
+    print('Type Ia rate:', '%1.3f' % (rate_Ia * 1e12), '(-' '%1.3f' % (low_Ia * 1e12), ', +' + \
+          '%1.3f' % (high_Ia * 1e12), ')', '* 10^-12 SNe yr^-1 Lsun^-1')
+    print('Type SE rate:', '%1.3f' % (rate_SE * 1e12), '(-' '%1.3f' % (low_SE * 1e12), ', +' + \
+          '%1.3f' % (high_SE * 1e12), ')', '* 10^-12 SNe yr^-1 Lsun^-1')
+    print('Type II rate:', '%1.3f' % (rate_II * 1e12), '(-' '%1.3f' % (low_II * 1e12), ', +' + \
+          '%1.3f' % (high_II * 1e12), ')', '* 10^-12 SNe yr^-1 Lsun^-1')
+    print()
+
+    total_rate, total_low, total_high = sn_rate_lum_total_all_types(list_galaxies)
+
+    print('Total rate:', '%1.3f' % (total_rate * 1e12), '(-' '%1.3f' % (total_low * 1e12), ', +' + \
+          '%1.3f' % (total_high * 1e12), ')', '* 10^-12 SNe yr^-1 Lsun^-1')
+
+    sne_per_vol = total_rate * lum_density * 1e9  # convert volumetric rate to SNe / yr / Gpc^3
+    sne_per_vol_low = total_low * lum_density * 1e9
+    sne_per_vol_high = total_high * lum_density * 1e9
+
+    print('SNe / Gpc^3 (rate * luminosity density)', \
+          '%1.3f' % sne_per_vol, '(-', '%1.3f' % sne_per_vol_low, ',+', '%1.3f' % sne_per_vol_high, ')',
+          'SNe / Gpc^3 ')
+
+def mass_vs_lum():
+    # parses the full sample of supernovae
+    gal_dict = {}
+    parse_galaxy_file(gal_dict, 'table2.dat', 'galaxy-full.txt')
+
+    list_galaxies = [curr_gal for curr_gal in gal_dict.values()]
+    masses = [curr_gal.stellar_mass_Lum for curr_gal in list_galaxies]
+    lums = [curr_gal.k_lum for curr_gal in list_galaxies]
+
+    plt.scatter(lums, masses)
+    #plt.yscale('log')
+    #plt.xscale('log')
+    plt.ylabel('Masses')
+    plt.xlabel('Luminosities')
+
+    plt.show()
+
+
 
 
 # call the desired function from this __main__ function
 def __main__():
-    #spiral_Ia = spiral_sne_vs_radius('Ia', 0.1)
-    #spiral_SE = spiral_sne_vs_radius('SE', 0.1)
-    #spiral_II = spiral_sne_vs_radius('II', 0.1)
-    #dwarf_Ia = dwarf_sne_vs_radius('Ia', 0.1)
-    #dwarf_SE = dwarf_sne_vs_radius('SE', 0.1)
-    #dwarf_II = dwarf_sne_vs_radius('II', 0.1)
 
-    #print(scipy.stats.ks_2samp(spiral_Ia, dwarf_Ia))
-    #print(scipy.stats.ks_2samp(spiral_SE, dwarf_SE))
-    #print(scipy.stats.ks_2samp(spiral_II, dwarf_II))
-
-    #print(scipy.stats.anderson_ksamp([spiral_Ia, dwarf_Ia]))
-    #print(scipy.stats.anderson_ksamp([spiral_SE, dwarf_SE]))
-    #print(scipy.stats.anderson_ksamp([spiral_II, dwarf_II]))
-
-    # Example usage of the CDF
-    #curr_rad = 1.0
-    #print('CDF for Spiral Ias at r / r25 =', curr_rad, ':', sn_count_cdf(spiral_Ia, curr_rad))
-
-    # Here's how to calculate the CDF for CC SNe:
-    # append the list of SNe II radii to the list of SE SNe to produce the list of CC SNe
-    # CC SNe = SE SNe + SNe II
-    #spiral_CC = spiral_SE + spiral_II
-    #dwarf_CC = dwarf_SE + dwarf_II
-
-    #print('CDF for Spiral CCs at r / r25 =', curr_rad, ':', sn_count_cdf(spiral_CC, curr_rad))
-    #print('CDF for Dwarf CCs at r / r25 =', curr_rad, ':', sn_count_cdf(dwarf_CC, curr_rad))
-
-    #sne_radial_histogram()
+    find_luminosity_rates()
+    #mass_vs_lum()
 
     if False:
         print('*** Spiral Outskirts (M > 10^9 Msun) ***')
@@ -1744,15 +1825,6 @@ def __main__():
         total_sn_rate_outskirts(10)
         total_sn_rate_outskirts(10, rate_function=sn_rate_outskirts_all_types, yrange=[0.003, 30])
 
-    #explore_dwarfs()
 
-    #total_rate_dwarf_irr()
-
-    # total_rate_all_types()
-    # examine_uv_outskirts()
-
-    # total_rate_inside_spirals_all_types()
-
-    kait_fov()
 
 __main__()
