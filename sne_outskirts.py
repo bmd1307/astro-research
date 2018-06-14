@@ -1642,9 +1642,17 @@ def kait_fov():
         print('\tSne where 4.0 < r / 25 <= inf:', sum(1 for dr in curr_drs if 4.0 <= dr))
 
 def find_luminosity_rates():
-    print("*** Luminosity Rates in Dwarfs")
+    lum_cut = 0.125 # * 2.0
 
-    lum_cut = 0.125 * 10**1.5
+    print('Luminosity cut:', '%1.3e' % (lum_cut * 1e10))
+    print('Equivalent Mass:', '%1.3e' % (lum_cut * 1e10 * 0.8))
+
+    print("*** Luminosity Density of the Universe ***")
+
+    lum_density = schechter_density(1e0, 10 ** 14.5)[0]
+    print('Luminosity density:', '%.3e' % (lum_density), 'Lsun/Mpc^3')
+
+    print("*** Luminosity Rates in Dwarfs")
 
     lum_rate_dwarfs(lum_cut)
 
@@ -1653,8 +1661,7 @@ def find_luminosity_rates():
     lum_rate_outskirts(lum_cut)
 
 def lum_rate_outskirts(lum_cut):
-    # sn_rate_lum_outskirts_all_types
-    # sn_rate_lum_total_all_types
+    local_vol = (4 / 3) * math.pi * (0.060) ** 3  # local volume in Gpc^3 (radius of 60 Mpc)
 
     # parses the full sample of supernovae
     gal_dict = {}
@@ -1669,6 +1676,7 @@ def lum_rate_outskirts(lum_cut):
     # limits the list of galaxies to the full_optimal
     list_galaxies = [curr_gal for curr_gal in gal_dict.values() if curr_gal.full_optimal and \
                         curr_gal.hubble_type[0] == 'S' and curr_gal.k_lum > lum_cut]
+    list_galaxies_local_vol = [curr_gal for curr_gal in list_galaxies if curr_gal.distance <= 60.0]
 
     # TODO Change the SN rate functions below
 
@@ -1692,8 +1700,14 @@ def lum_rate_outskirts(lum_cut):
     print('Minimum galaxy luminosity:', '%.3e' % (lowest_lum * 1e10), 'Lsun')
     print('Maximum galaxy luminosity:', '%.3e' % (highest_lum * 1e10), 'Lsun')
 
+    total_lum = sum([curr_gal.k_lum for curr_gal in list_galaxies_local_vol])
+    print('Total luminosity of spiral galaxies (in local volume):', '%.3e' % (total_lum * 1e10))
+
     lum_density = schechter_density(lum_cut * 1e10, 10**14.5)[0]
     print('Luminosity density of Spiral galaxies:', '%.3e' % (lum_density), 'Lsun/Mpc^3')
+
+                                                                          # convert local volume to Mpc^3 from Gpc^3
+    print('Actual luminosity of spiral galaxies:', '%.3e' % (lum_density * local_vol * 1e9))
 
     rate_Ia, low_Ia, high_Ia = sn_rate_lum_outskirts(list_galaxies, 'Ia')
     rate_SE, low_SE, high_SE = sn_rate_lum_outskirts(list_galaxies, 'SE')
@@ -1712,6 +1726,13 @@ def lum_rate_outskirts(lum_cut):
     print('Total rate:', '%1.3f' % (total_rate * 1e12), '(-' '%1.3f' % (total_low * 1e12), ', +' + \
           '%1.3f' % (total_high * 1e12), ')', '* 10^-12 SNe yr^-1 Lsun^-1')
 
+    cc_rate = rate_SE + rate_II
+    cc_low = low_SE + low_II
+    cc_high = high_SE + high_II
+
+    print('CC rate:', '%1.3f' % (cc_rate * 1e12), '(-' '%1.3f' % (cc_low * 1e12), ', +' + \
+          '%1.3f' % (cc_high * 1e12), ')', '* 10^-12 SNe yr^-1 Lsun^-1')
+
     sne_per_vol = total_rate * lum_density * 1e9 # convert volumetric rate to SNe / yr / Gpc^3
     sne_per_vol_low = total_low * lum_density * 1e9
     sne_per_vol_high = total_high * lum_density * 1e9
@@ -1720,9 +1741,28 @@ def lum_rate_outskirts(lum_cut):
           '%1.3f' % sne_per_vol, '(-', '%1.3f' % sne_per_vol_low, ',+', '%1.3f' % sne_per_vol_high, ')',
           'SNe / Gpc^3 ')
 
+    cc_per_vol = cc_rate * lum_density * 1e9  # convert volumetric rate to SNe / yr / Gpc^3
+    cc_per_vol_low = cc_low * lum_density * 1e9
+    cc_per_vol_high = cc_high * lum_density * 1e9
+
+    print('CC SNe / Gpc^3 (rate * luminosity density)', \
+          '%1.3f' % cc_per_vol, '(-', '%1.3f' % cc_per_vol_low, ',+', '%1.3f' % cc_per_vol_high, ')',
+          'SNe / Gpc^3 ')
+
+    print('Local volume:', '%1.3e Mpc' % local_vol)
+    print('Local CC SNe rate per year', \
+          '%1.3f' % (cc_per_vol * local_vol), '(-', \
+          '%1.3f' % (cc_per_vol_low * local_vol), ',+', \
+          '%1.3f' % (cc_per_vol_high * local_vol), ')', \
+          'SNe / yr ')
+    print('Local Total SNe rate per year', \
+          '%1.3f' % (sne_per_vol * local_vol), '(-', \
+          '%1.3f' % (sne_per_vol_low * local_vol), ',+', \
+          '%1.3f' % (sne_per_vol_high * local_vol), ')', \
+          'SNe / yr ')
+
 def lum_rate_dwarfs(lum_cut):
-    # sn_rate_lum_outskirts_all_types
-    # sn_rate_lum_total_all_types
+    local_vol = (4 / 3) * math.pi * (0.060) ** 3  # local volume in Gpc^3 (radius of 60 Mpc)
 
     # parses the full sample of supernovae
     gal_dict = {}
@@ -1737,6 +1777,7 @@ def lum_rate_dwarfs(lum_cut):
     # limits the list of galaxies to the full_optimal
     list_galaxies = [curr_gal for curr_gal in gal_dict.values() if curr_gal.full_optimal and\
                         0.0 < curr_gal.k_lum < lum_cut]
+    list_galaxies_local_vol = [curr_gal for curr_gal in list_galaxies if curr_gal.distance <= 60.0]
 
     num_sne = sum([len(curr_gal.supernovae) for curr_gal in list_galaxies])
 
@@ -1758,8 +1799,14 @@ def lum_rate_dwarfs(lum_cut):
     print('Minimum galaxy luminosity:', '%.3e' % (lowest_lum * 1e10), 'Lsun')
     print('Maximum galaxy luminosity:', '%.3e' % (highest_lum * 1e10), 'Lsun')
 
-    lum_density = schechter_density(1e0, lum_cut * 1e10)[0]
+    total_lum = sum([curr_gal.k_lum for curr_gal in list_galaxies_local_vol])
+    print('Total luminosity of dwarf galaxies (in local volume):', '%.3e' % (total_lum * 1e10))
+
+    lum_density = schechter_density(1e6, lum_cut * 1e10)[0]
     print('Luminosity density of Dwarf galaxies:', '%.3e' % (lum_density), 'Lsun/Mpc^3')
+
+                                                                          # convert local volume to Mpc^3 from Gpc^3
+    print('Actual luminosity of dwarf galaxies:', '%.3e' % (lum_density * local_vol * 1e9))
 
     rate_Ia, low_Ia, high_Ia = sn_rate_lum_total(list_galaxies, 'Ia')
     rate_SE, low_SE, high_SE = sn_rate_lum_total(list_galaxies, 'SE')
@@ -1778,6 +1825,13 @@ def lum_rate_dwarfs(lum_cut):
     print('Total rate:', '%1.3f' % (total_rate * 1e12), '(-' '%1.3f' % (total_low * 1e12), ', +' + \
           '%1.3f' % (total_high * 1e12), ')', '* 10^-12 SNe yr^-1 Lsun^-1')
 
+    cc_rate = rate_SE + rate_II
+    cc_low = low_SE + low_II
+    cc_high = high_SE + high_II
+
+    print('CC rate:', '%1.3f' % (cc_rate * 1e12), '(-' '%1.3f' % (cc_low * 1e12), ', +' + \
+          '%1.3f' % (cc_high * 1e12), ')', '* 10^-12 SNe yr^-1 Lsun^-1')
+
     sne_per_vol = total_rate * lum_density * 1e9  # convert volumetric rate to SNe / yr / Gpc^3
     sne_per_vol_low = total_low * lum_density * 1e9
     sne_per_vol_high = total_high * lum_density * 1e9
@@ -1785,6 +1839,26 @@ def lum_rate_dwarfs(lum_cut):
     print('SNe / Gpc^3 (rate * luminosity density)', \
           '%1.3f' % sne_per_vol, '(-', '%1.3f' % sne_per_vol_low, ',+', '%1.3f' % sne_per_vol_high, ')',
           'SNe / Gpc^3 ')
+
+    cc_per_vol = cc_rate * lum_density * 1e9  # convert volumetric rate to SNe / yr / Gpc^3
+    cc_per_vol_low = cc_low * lum_density * 1e9
+    cc_per_vol_high = cc_high * lum_density * 1e9
+
+    print('CC SNe / Gpc^3 (rate * luminosity density)', \
+          '%1.3f' % cc_per_vol, '(-', '%1.3f' % cc_per_vol_low, ',+', '%1.3f' % cc_per_vol_high, ')',
+          'SNe / Gpc^3 ')
+
+    print('Local volume:', '%1.3e Mpc' % local_vol)
+    print('Local CC SNe rate per year', \
+          '%1.3f' % (cc_per_vol * local_vol), '(-', \
+          '%1.3f' % (cc_per_vol_low * local_vol), ',+', \
+          '%1.3f' % (cc_per_vol_high * local_vol), ')',\
+          'SNe / yr ')
+    print('Local Total SNe rate per year', \
+          '%1.3f' % (sne_per_vol * local_vol), '(-', \
+          '%1.3f' % (sne_per_vol_low * local_vol), ',+',\
+          '%1.3f' % (sne_per_vol_high * local_vol), ')',\
+          'SNe / yr ')
 
 def mass_vs_lum():
     # parses the full sample of supernovae
@@ -1803,7 +1877,16 @@ def mass_vs_lum():
 
     plt.show()
 
+def missing_sne():
+    # parses the full sample of supernovae
+    gal_dict = {}
+    parse_galaxy_file(gal_dict, 'table2.dat', 'galaxy-full.txt')
 
+    # parses the full sample of supernovae
+    sne_list = []
+    parse_sne_file(sne_list, 'sn-full.txt')
+
+    pair_galaxies_and_sne(gal_dict, sne_list)
 
 
 # call the desired function from this __main__ function
