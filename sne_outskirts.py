@@ -601,7 +601,7 @@ def total_sn_rate_outskirts(n_bins, save_graph = False, verbose = True, show_gra
                 'Fixed Bin'])
     leg.set_zorder(30)
     plt.xlabel('Stellar Mass ($10^{10} M_{\odot}$)')
-    plt.ylabel('SNum ($10^{-12} M_{\odot}^{-1} yr^{-1}$)')
+    plt.ylabel('SNuM ($10^{-12} M_{\odot}^{-1} yr^{-1}$)')
     plt.xscale('log')
     plt.yscale('log')
     plt.xlim([10**-2.5, 10**2.5])
@@ -1888,12 +1888,175 @@ def missing_sne():
 
     pair_galaxies_and_sne(gal_dict, sne_list)
 
+    # select only the galaxies in the complete volume
+    list_galaxies = [curr_gal for curr_gal in gal_dict.values() if curr_gal.distance <= 60.0]
+
+    local_volume = (4/3) * math.pi * (60.0) ** 3
+
+    print('Galaxies in the local volume: %i' % len(list_galaxies))
+
+    lim_low = 6
+    lim_high = 14
+    bin_width = 0.5
+    bin_lims = [10 ** (lim_low + i * bin_width) for i in range(0, int((lim_high - lim_low) / bin_width) + 1)]
+    print(bin_lims[0], bin_lims[-1])
+
+    luminosities = [curr_gal.k_lum * 1e10 for curr_gal in list_galaxies]
+
+    sne_counts = [0] * (len(bin_lims) - 1)
+
+    for i in range(len(sne_counts)):
+        curr_low_lim = bin_lims[i]
+        curr_high_lim = bin_lims[i + 1]
+        curr_gals = [curr_gal for curr_gal in list_galaxies if curr_low_lim <= (curr_gal.k_lum * 1e10) < curr_high_lim]
+        sne_counts[i] = sum([len(curr_gal.supernovae) for curr_gal in curr_gals])
+        print('SNe between %1.3e and %1.3e: %i' % (curr_low_lim, curr_high_lim, sne_counts[i]))
+
+    for i in range(len(sne_counts)):
+        curr_low_lim = bin_lims[i]
+        curr_high_lim = bin_lims[i + 1]
+        print('Expected galaxy count for %1.3e and %1.3e: %.3f' % (curr_low_lim, curr_high_lim, local_volume * schechter(curr_low_lim, curr_high_lim)[0]))
+
+    for i in range(len(sne_counts)):
+        curr_low_lim = bin_lims[i]
+        curr_high_lim = bin_lims[i + 1]
+        curr_gals = [curr_gal for curr_gal in list_galaxies if curr_low_lim <= (curr_gal.k_lum * 1e10) < curr_high_lim]
+        curr_total_lum = sum([curr_gal.k_lum * 1e10 for curr_gal in curr_gals])
+
+        print('(Expected, total) lum for %1.3e and %1.3e: (%1.3e, %1.3e)' % (\
+            curr_low_lim, curr_high_lim, local_volume * schechter_density(curr_low_lim, curr_high_lim)[0], curr_total_lum\
+        ))
+
+    for i in range(len(bin_lims) - 1):
+        curr_low_lim = bin_lims[i]
+        curr_high_lim = bin_lims[i + 1]
+
+    n, bins, patches = plt.hist(luminosities, bins=bin_lims)
+
+    print(n)
+
+    plt.xscale('log')
+    plt.show()
+
+def mean_dwarf_mass():
+    # parses the full sample of supernovae
+    gal_dict = {}
+    parse_galaxy_file(gal_dict, 'table2.dat', 'galaxy-full.txt')
+
+    # parses the full sample of supernovae
+    sne_list = []
+    parse_sne_file(sne_list, 'sn-full.txt')
+
+    pair_galaxies_and_sne(gal_dict, sne_list)
+
+    list_dwarfs = [curr_gal for curr_gal in gal_dict.values() if curr_gal.full_optimal and 0.0 < curr_gal.stellar_mass_Lum < 0.1]
+
+    print('Found %i dwarfs' % len(list_dwarfs))
+
+    lums = [curr_gal.k_lum * 1e10 for curr_gal in list_dwarfs]
+
+    print('Mean luminosity: %.3e Lsun' % np.mean(lums))
+
+def sne_type_breakdown():
+    # parses the full sample of supernovae
+    gal_dict = {}
+    parse_galaxy_file(gal_dict, 'table2.dat', 'galaxy-full.txt')
+
+    # parses the full sample of supernovae
+    sne_list = []
+    parse_sne_file(sne_list, 'sn-full.txt')
+
+    pair_galaxies_and_sne(gal_dict, sne_list)
+
+    list_dwarfs = [curr_gal for curr_gal in gal_dict.values() if 0.0 < curr_gal.stellar_mass_Lum < 0.1]
+    dwarf_sne_list = []
+    for curr_gal in list_dwarfs:
+        dwarf_sne_list = dwarf_sne_list + curr_gal.supernovae
+
+    list_spirals = [curr_gal for curr_gal in gal_dict.values() if curr_gal.hubble_type[0] == 'S']
+    outskirts_sne_list = []
+    for curr_gal in list_spirals:
+        for curr_sn in curr_gal.supernovae:
+            if curr_sn.distance_ratio("read") >= 1.0:
+                outskirts_sne_list.append(curr_sn)
+
+    print('***   OVERALL TYPES SNe   ***')
+
+    sn_types = []
+    for curr_gal in gal_dict.values():
+        sn_types = sn_types + [curr_sn.sn_type for curr_sn in curr_gal.supernovae]
+    print_sne_types(sn_types)
+
+    print('***      DWARFS SNe       ***')
+
+    dwarf_sn_types = [curr_sn.sn_type for curr_sn in dwarf_sne_list]
+    print_sne_types(dwarf_sn_types)
+
+    print('*** OUTSKIRTS SPIRALS SNe ***')
+
+    outskirts_sn_types = [curr_sn.sn_type for curr_sn in outskirts_sne_list]
+    print_sne_types(outskirts_sn_types)
+
+def print_sne_types(sne_types):
+    sne_types = sorted(sne_types)
+
+    type_hist = {}
+
+    for snt in sne_types:
+        if snt in type_hist:
+            type_hist[snt] = type_hist[snt] + 1
+        else:
+            type_hist[snt] = 1
+
+    sne_keys = type_hist.keys()
+
+    sne_keys = sorted(sne_keys)
+
+    type_II_keys = [k for k in sne_keys if 'II' == k[0:2]]
+
+    type_Ia_keys = [k for k in sne_keys if 'Ia' == k[0:2]]
+
+    type_Ib_keys = [k for k in sne_keys if 'Ib' == k[0:2] and 'Ibc' != k[0:3]]
+
+    type_Ibc_keys = [k for k in sne_keys if 'Ibc' == k[0:3]]
+
+    type_Ic_keys = [k for k in sne_keys if 'Ic' == k[0:2]]
+
+    print('*** FORMAT ***')
+    print('General SN Type: <# General SNe>')
+    print('\tSpecific SN Type: <# Specific SNe>')
+
+    print('*** DATA ***')
+
+    print('Type Ia: ', sum([type_hist[k] for k in type_Ia_keys]))
+    for k in type_Ia_keys:
+        print('\t', (k + ':').ljust(8), str(type_hist[k]).rjust(4), sep='')
+
+    print('Type Ib: ', sum([type_hist[k] for k in type_Ib_keys]))
+    for k in type_Ib_keys:
+        print('\t', (k + ':').ljust(8), str(type_hist[k]).rjust(4), sep='')
+
+    print('Type Ibc: ', sum([type_hist[k] for k in type_Ibc_keys]))
+    for k in type_Ibc_keys:
+        print('\t', (k + ':').ljust(8), str(type_hist[k]).rjust(4), sep='')
+
+    print('Type Ic: ', sum([type_hist[k] for k in type_Ic_keys]))
+    for k in type_Ic_keys:
+        print('\t', (k + ':').ljust(8), str(type_hist[k]).rjust(4), sep='')
+
+    print('Type II: ', sum([type_hist[k] for k in type_II_keys]))
+    for k in type_II_keys:
+        print('\t', (k + ':').ljust(8), str(type_hist[k]).rjust(4), sep='')
+
 
 # call the desired function from this __main__ function
 def __main__():
 
-    find_luminosity_rates()
+    #missing_sne()
+    #find_luminosity_rates()
     #mass_vs_lum()
+    #mean_dwarf_mass()
+    #sne_type_breakdown()
 
     if False:
         print('*** Spiral Outskirts (M > 10^9 Msun) ***')
@@ -1908,6 +2071,6 @@ def __main__():
         total_sn_rate_outskirts(10)
         total_sn_rate_outskirts(10, rate_function=sn_rate_outskirts_all_types, yrange=[0.003, 30])
 
-
+    total_sn_rate_outskirts(10, rate_function=sn_rate_outskirts_all_types, yrange=[0.003, 30])
 
 __main__()
