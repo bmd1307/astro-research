@@ -1938,6 +1938,7 @@ def missing_sne():
     plt.xscale('log')
     plt.show()
 
+
 def mean_dwarf_mass():
     # parses the full sample of supernovae
     gal_dict = {}
@@ -1956,6 +1957,7 @@ def mean_dwarf_mass():
     lums = [curr_gal.k_lum * 1e10 for curr_gal in list_dwarfs]
 
     print('Mean luminosity: %.3e Lsun' % np.mean(lums))
+
 
 def sne_type_breakdown():
     # parses the full sample of supernovae
@@ -1996,6 +1998,7 @@ def sne_type_breakdown():
 
     outskirts_sn_types = [curr_sn.sn_type for curr_sn in outskirts_sne_list]
     print_sne_types(outskirts_sn_types)
+
 
 def print_sne_types(sne_types):
     sne_types = sorted(sne_types)
@@ -2049,6 +2052,57 @@ def print_sne_types(sne_types):
         print('\t', (k + ':').ljust(8), str(type_hist[k]).rjust(4), sep='')
 
 
+def plot_sne_vs_upsilon():
+    j_spiral = 5.458e8 # Units: Lsun / Mpc^3
+    j_dwarf = 2.173e7  # Units: Lsun / Mpc^3
+
+    r_dwarf = 5.819e-12  # Units: SNe / yr / Msun
+    r_spiral = 0.021e-12 # Units: SNe / yr / Msun
+
+    r_dwarf_low = 5.819e-12 - 3.342e-12
+    r_spiral_low = 0.021e-12 - 0.002e-12
+
+    r_dwarf_high = 5.819e-12 + 3.342e-12
+    r_spiral_high = 0.021e-12 + 0.002e-12
+
+    vol_dwarf = lambda ups: r_dwarf * j_dwarf / ups
+    vol_spiral = lambda ups: r_spiral * j_spiral / ups
+
+    vol_dwarf_low = lambda ups: r_dwarf_low * j_dwarf / ups
+    vol_spiral_low = lambda ups: r_spiral_low * j_spiral / ups
+
+    vol_dwarf_high = lambda ups: r_dwarf_high * j_dwarf / ups
+    vol_spiral_high = lambda ups: r_spiral_high * j_spiral / ups
+
+    upsilons = list(i * 0.1 for i in range(10, 210))
+    #upsilons = list(i * 0.1 for i in range(20, 170))
+
+    dwarf_ns = [vol_dwarf(ups) * 1e9 for ups in upsilons]
+    spiral_ns = [vol_spiral(0.8) * 1e9 for ups in upsilons]
+
+    dwarf_ns_low = [vol_dwarf_low(ups) * 1e9 for ups in upsilons]
+    spiral_ns_low = [vol_spiral_low(0.8) * 1e9 for ups in upsilons]
+
+    dwarf_ns_high = [vol_dwarf_high(ups) * 1e9 for ups in upsilons]
+    spiral_ns_high = [vol_spiral_high(0.8) * 1e9 for ups in upsilons]
+
+    plt.fill_between(upsilons, dwarf_ns_low, dwarf_ns_high, facecolor = 'lightblue', alpha = 0.5, zorder = 1)
+    plt.fill_between(upsilons, spiral_ns_low, spiral_ns_high, facecolor='yellow', alpha = 0.5, zorder=1)
+
+
+    dwarf_line, = plt.plot(upsilons, dwarf_ns)
+    spiral_line, = plt.plot(upsilons, spiral_ns, linestyle = 'dashed')
+
+    legend = plt.legend(['Dwarf Rate', 'Spiral Outskirts Rate', 'Error for Dwarf Rate (68%)', 'Error for Spiral Outskirts Rate (68%)'])
+
+    legend.set_zorder(30)
+
+    plt.xlim([1, 21])
+    plt.ylim([0, 35000])
+    plt.xlabel('Mass-to-Light Ratio for Dwarf Galaxies ($\\Upsilon_{Dwarf}$)')
+    plt.ylabel('Volumetric CC SN rate (SNe / yr / $Gpc^3$)')
+    plt.show()
+
 # call the desired function from this __main__ function
 def __main__():
 
@@ -2057,6 +2111,7 @@ def __main__():
     #mass_vs_lum()
     #mean_dwarf_mass()
     #sne_type_breakdown()
+    plot_sne_vs_upsilon()
 
     if False:
         print('*** Spiral Outskirts (M > 10^9 Msun) ***')
@@ -2071,6 +2126,6 @@ def __main__():
         total_sn_rate_outskirts(10)
         total_sn_rate_outskirts(10, rate_function=sn_rate_outskirts_all_types, yrange=[0.003, 30])
 
-    total_sn_rate_outskirts(10, rate_function=sn_rate_outskirts_all_types, yrange=[0.003, 30])
+    #total_sn_rate_outskirts(10, rate_function=sn_rate_outskirts_all_types, yrange=[0.003, 30])
 
 __main__()
